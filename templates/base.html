@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestion Cotisations{% endblock %} | A.B H.S</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="{% static 'img/logo.png' %}" alt="Logo A.B H.S">
+            <h5>ASSOCIATION DES<br>BIOLOGISTES</h5>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-grid-1x2-fill"></i> Tableau de bord</a></li>
+            <li><a href="{% url 'liste_cotisations' %}" class="{% if 'cotisation' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Cotisations</a></li>
+            <li><a href="{% url 'liste_membres' %}" class="{% if 'membre' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people-fill"></i> Membres</a></li>
+            {% if user.is_superuser %}
+            <li><a href="/admin/"><i class="bi bi-shield-lock-fill"></i> Administration</a></li>
+            {% endif %}
+        </ul>
+        <div class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="text-white text-decoration-none d-flex align-items-center gap-2">
+                <i class="bi bi-box-arrow-right"></i> Déconnexion
+            </a>
+        </div>
+    </aside>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="main-content">
+        <div class="topbar">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-light d-md-none" id="sidebarToggle"><i class="bi bi-list"></i></button>
+                <h1>{% block page_title %}Tableau de bord{% endblock %}</h1>
+            </div>
+            <div class="user-profile">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                    {{ user.username|first|upper }}
+                </div>
+                <span class="d-none d-md-block">{{ user.username }}</span>
+            </div>
+        </div>
+
+        <!-- MESSAGES (SUCCÈS / ERREURS) -->
+        {% if messages %}
+            <div class="position-relative">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-custom shadow-sm" style="transition: opacity 0.3s;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

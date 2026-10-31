@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Tableau de bord{% endblock %}
+{% block page_title %}Vue d'ensemble{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card-custom kpi-card h-100">
+            <div class="kpi-icon blue"><i class="bi bi-people"></i></div>
+            <div class="kpi-info">
+                <h3>{{ stats.total_membres }}</h3>
+                <p>Membres actifs</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card-custom kpi-card h-100">
+            <div class="kpi-icon green"><i class="bi bi-wallet2"></i></div>
+            <div class="kpi-info">
+                <h3>{{ stats.cotisations_mois|floatformat:0 }}</h3>
+                <p>FCFA ce mois</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card-custom kpi-card h-100">
+            <div class="kpi-icon red"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="kpi-info">
+                <h3>{{ stats.retards }}</h3>
+                <p>Retards constatés</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card-custom kpi-card h-100">
+            <div class="kpi-icon orange"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="kpi-info">
+                <h3>{{ stats.total_annee|floatformat:0 }}</h3>
+                <p>Total {{ annee_actuelle }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Tableau Derniers paiements -->
+    <div class="col-lg-6">
+        <div class="card-custom h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history text-primary"></i> Derniers paiements</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr><th>Membre</th><th>Montant</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in derniers_paiements %}
+                        <tr>
+                            <td class="fw-medium">{{ c.membre }}</td>
+                            <td class="text-success fw-bold">{{ c.montant|floatformat:0 }} FCFA</td>
+                            <td class="text-muted">{{ c.date_paiement|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">Aucun paiement enregistré.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau Retards -->
+    <div class="col-lg-6">
+        <div class="card-custom h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-circle text-danger"></i> Cotisations en retard</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr><th>Membre</th><th>Montant</th><th>Échéance</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in retards %}
+                        <tr>
+                            <td class="fw-medium">{{ c.membre }}</td>
+                            <td class="text-danger fw-bold">{{ c.montant|floatformat:0 }} FCFA</td>
+                            <td class="text-muted">{{ c.date_echeance|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">Aucun retard. 🎉</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Profil de {{ membre }}{% endblock %}
+{% block page_title %}Profil du membre{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Carte de visite -->
+    <div class="col-lg-4">
+        <div class="card-custom text-center p-5 h-100">
+            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3 shadow" style="width: 100px; height: 100px; font-size: 2.5rem;">
+                {{ membre.prenom|first|upper }}{{ membre.nom|first|upper }}
+            </div>
+            <h4 class="fw-bold mb-1">{{ membre.nom|upper }}</h4>
+            <p class="text-muted mb-2">{{ membre.prenom }}</p>
+            
+            <!-- Ajout du poste ici -->
+            <span class="badge bg-primary text-white mb-4 px-3 py-2 rounded-pill fs-6 shadow-sm">
+                <i class="bi bi-briefcase-fill me-1"></i> {{ membre.get_poste_display }}
+            </span>
+            
+            <div class="bg-light rounded-3 p-3 mb-4 text-start">
+                <div class="mb-2"><i class="bi bi-telephone text-primary me-2"></i> {{ membre.telephone|default:"Non renseigné" }}</div>
+                <div class="mb-2"><i class="bi bi-envelope text-primary me-2"></i> {{ membre.email|default:"Non renseigné" }}</div>
+                <div><i class="bi bi-calendar3 text-primary me-2"></i> Adhésion : {{ membre.date_adhesion|date:"d/m/Y" }}</div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center bg-success bg-opacity-10 text-success rounded-3 p-3">
+                <span class="fw-bold small text-uppercase">Total payé</span>
+                <span class="fw-bold fs-5">{{ total|floatformat:0 }} FCFA</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historique -->
+    <div class="col-lg-8">
+        <div class="card-custom h-100">
+            <h5 class="fw-bold mb-4"><i class="bi bi-clock-history text-primary me-2"></i> Historique des cotisations</h5>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>Détail</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                            <th>Date paiement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in cotisations %}
+                        <tr>
+                            <td>
+                                <div class="fw-medium">{{ c.get_type_cotisation_display }}</div>
+                                <div class="text-muted small">{% if c.type_cotisation == 'mensuelle' %}{{ c.get_mois_display }} {{ c.annee }}{% else %}{{ c.libelle }}{% endif %}</div>
+                            </td>
+                            <td class="fw-bold">{{ c.montant|floatformat:0 }} FCFA</td>
+                            <td>
+                                {% if c.statut == 'payee' %}<span class="badge-custom badge-success">Payée</span>
+                                {% elif c.statut == 'retard' %}<span class="badge-custom badge-danger">En retard</span>
+                                {% else %}<span class="badge-custom badge-warning">En attente</span>{% endif %}
+                            </td>
+                            <td class="text-muted">{{ c.date_paiement|date:"d/m/Y"|default:"—" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">Aucune cotisation enregistrée.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{% url 'liste_membres' %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
+</div>
+{% endblock %}

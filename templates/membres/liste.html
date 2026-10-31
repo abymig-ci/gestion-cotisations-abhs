@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Membres{% endblock %}
+{% block page_title %}Nos Membres{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <p class="text-muted mb-0">Gérez la liste des biologistes membres de l'association.</p>
+    <a href="{% url 'ajouter_membre' %}" class="btn-primary-custom">
+        <i class="bi bi-person-plus-fill"></i> Nouveau membre
+    </a>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Membre</th>
+                    <th>Téléphone</th>
+                    <th>Statut</th>
+                    <th>Cotisations</th>
+                    <th>Total payé</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in membres %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-light text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:40px; height:40px;">
+                                {{ m.prenom|first|upper }}{{ m.nom|first|upper }}
+                            </div>
+                            <div>
+                                <div class="fw-bold">{{ m.nom|upper }}</div>
+                                <div class="text-muted small">{{ m.prenom }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-muted">{{ m.telephone|default:"—" }}</td>
+                    <td>
+                        {% if m.statut == 'actif' %}<span class="badge-custom badge-success">Actif</span>
+                        {% elif m.statut == 'inactif' %}<span class="badge-custom bg-secondary text-white">Inactif</span>
+                        {% else %}<span class="badge-custom badge-danger">Suspendu</span>{% endif %}
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ m.nb_cotisations }}</span></td>
+                    <td class="fw-bold">{{ m.total_paye|default:0|floatformat:0 }} <small>FCFA</small></td>
+                    <td class="text-end text-nowrap">
+                        <a href="{% url 'detail_membre' m.pk %}" class="btn btn-sm btn-outline-primary border-0 rounded-circle" title="Profil" style="width:32px; height:32px; padding:5px;">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'modifier_membre' m.pk %}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle" title="Modifier" style="width:32px; height:32px; padding:5px;">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-5">Aucun membre enregistré.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
