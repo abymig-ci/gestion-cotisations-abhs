@@ -3,6 +3,14 @@
 {% block page_title %}Nos Membres{% endblock %}
 
 {% block content %}
+
+{% if groupe_actuel %}
+<div class="alert alert-info shadow-sm border-0 mb-4" style="background-color: #e0e7ff; color: #0a1c5c;">
+    <i class="bi bi-funnel-fill me-2"></i> Vous consultez actuellement les membres du groupe : <strong>{{ groupe_actuel.nom }}</strong>
+    <a href="{% url 'liste_membres' %}" class="btn btn-sm btn-outline-primary float-end ms-3">Voir tous les membres</a>
+</div>
+{% endif %}
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <p class="text-muted mb-0">Gérez la liste des biologistes membres de l'association.</p>
     <a href="{% url 'ajouter_membre' %}" class="btn-primary-custom">
@@ -32,8 +40,10 @@
                                 {{ m.prenom|first|upper }}{{ m.nom|first|upper }}
                             </div>
                             <div>
-                                <div class="fw-bold">{{ m.nom|upper }}</div>
-                                <div class="text-muted small">{{ m.prenom }}</div>
+                                <!-- Ajout de fs-5 (taille) et mb-0 (espacement) -->
+                                <div class="fw-bold fs-5 mb-0">{{ m.nom|upper }}</div>
+                                <div class="text-muted fs-6">{{ m.prenom }}</div>
+                                <div class="badge bg-primary bg-opacity-10 text-primary mt-1">{{ m.get_poste_display }}</div>
                             </div>
                         </div>
                     </td>

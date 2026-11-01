@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Postes{% endblock %}
+{% block page_title %}Gestion des Postes{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <p class="text-muted mb-0">Gérez les rôles au sein de l'association.</p>
+    <a href="{% url 'ajouter_poste' %}" class="btn-primary-custom">
+        <i class="bi bi-plus-lg"></i> Nouveau Poste
+    </a>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Nom du Poste</th>
+                    <th>Membres occupant ce poste</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in postes %}
+                <tr>
+                    <td class="fw-bold text-primary">{{ p.nom }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ p.nb_membres }} membre(s)</span></td>
+                    <td class="text-end">
+                        <a href="{% url 'liste_membres' %}?poste={{ p.id }}" class="btn btn-sm btn-outline-primary border-0 rounded-circle" title="Voir les membres">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted py-4">Aucun poste créé.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}{{ titre }}{% endblock %}
+{% block page_title %}{{ titre }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card-custom p-4 p-md-5">
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors.0 }}</div>{% endif %}
+                </div>
+                {% endfor %}
+                <hr class="my-4 border-light">
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'liste_postes' %}" class="btn-outline-custom py-2 px-4">Annuler</a>
+                    <button type="submit" class="btn-primary-custom py-2 px-4">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
