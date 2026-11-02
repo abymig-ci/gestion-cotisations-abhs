@@ -89,6 +89,32 @@ def ajouter_groupe(request):
         form = GroupeForm()
     return render(request, 'membres/form_groupe.html', {'form': form, 'titre': 'Nouveau Groupe'})
 
+@login_required
+def modifier_groupe(request, pk):
+    groupe = get_object_or_404(Groupe, pk=pk)
+    if request.method == 'POST':
+        form = GroupeForm(request.POST, instance=groupe)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Groupe modifié avec succès.")
+            return redirect('liste_groupes')
+    else:
+        form = GroupeForm(instance=groupe)
+    return render(request, 'membres/form_groupe.html', {'form': form, 'titre': 'Modifier le Groupe'})
+
+@login_required
+def supprimer_groupe(request, pk):
+    groupe = get_object_or_404(Groupe, pk=pk)
+    if request.method == 'POST':
+        # On détache d'abord tous les membres de ce groupe
+        # Cela évite les erreurs de contrainte de clé étrangère
+        groupe.membres.update(groupe=None)
+        
+        # Ensuite, on supprime le groupe
+        groupe.delete()
+        messages.success(request, "Groupe supprimé. Les membres concernés sont désormais sans groupe.")
+        return redirect('liste_groupes')
+    return render(request, 'membres/confirmer_suppression_groupe.html', {'groupe': groupe})
 
 @login_required
 def liste_postes(request):
@@ -107,3 +133,12 @@ def ajouter_poste(request):
     else:
         form = PosteForm()
     return render(request, 'membres/form_poste.html', {'form': form, 'titre': 'Nouveau Poste'})
+
+@login_required
+def supprimer_membre(request, pk):
+    membre = get_object_or_404(Membre, pk=pk)
+    if request.method == 'POST':
+        membre.delete()
+        messages.success(request, "Le membre a été supprimé avec succès.")
+        return redirect('liste_membres')
+    return render(request, 'membres/confirmer_suppression.html', {'membre': membre})

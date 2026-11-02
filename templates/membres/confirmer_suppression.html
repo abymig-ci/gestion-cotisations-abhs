@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer le membre{% endblock %}
+{% block page_title %}Confirmer la suppression{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card-custom p-5 text-center border-danger">
+            <i class="bi bi-exclamation-triangle text-danger display-4 mb-3"></i>
+            <h4 class="fw-bold">Êtes-vous sûr ?</h4>
+            <p class="text-muted mb-4">
+                Vous êtes sur le point de supprimer définitivement le membre <strong>{{ membre.nom|upper }} {{ membre.prenom }}</strong>. 
+                <br><br>
+                <span class="text-danger fw-bold">Attention :</span> Toutes ses cotisations seront également supprimées. Cette action est irréversible.
+            </p>
+            <form method="post" class="d-flex justify-content-center gap-3">
+                {% csrf_token %}
+                <a href="{% url 'liste_membres' %}" class="btn-outline-custom px-4 py-2">Annuler</a>
+                <button type="submit" class="btn btn-danger px-4 py-2">Oui, supprimer</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

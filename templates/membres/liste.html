@@ -40,10 +40,10 @@
                                 {{ m.prenom|first|upper }}{{ m.nom|first|upper }}
                             </div>
                             <div>
-                                <!-- Ajout de fs-5 (taille) et mb-0 (espacement) -->
                                 <div class="fw-bold fs-5 mb-0">{{ m.nom|upper }}</div>
                                 <div class="text-muted fs-6">{{ m.prenom }}</div>
-                                <div class="badge bg-primary bg-opacity-10 text-primary mt-1">{{ m.get_poste_display }}</div>
+                                <!-- Modification ici : m.poste.nom au lieu de get_poste_display -->
+                                <div class="badge bg-primary bg-opacity-10 text-primary mt-1">{{ m.poste.nom|default:"—" }}</div>
                             </div>
                         </div>
                     </td>
@@ -61,6 +61,10 @@
                         </a>
                         <a href="{% url 'modifier_membre' m.pk %}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle" title="Modifier" style="width:32px; height:32px; padding:5px;">
                             <i class="bi bi-pencil"></i>
+                        </a>
+                        <!-- AJOUT DU BOUTON SUPPRIMER -->
+                        <a href="{% url 'supprimer_membre' m.pk %}" class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Supprimer" style="width:32px; height:32px; padding:5px;">
+                            <i class="bi bi-trash"></i>
                         </a>
                     </td>
                 </tr>
