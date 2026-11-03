@@ -25,7 +25,7 @@
                 <tr>
                     <th>Membre</th>
                     <th>Téléphone</th>
-                    <th>Statut Cotisation</th> <!-- Changement de titre -->
+                    <th>Statut Cotisation</th>
                     <th>Cotisations</th>
                     <th>Total payé</th>
                     <th class="text-end">Actions</th>
@@ -51,12 +51,14 @@
                     </td>
                     <td class="text-muted">{{ m.telephone|default:"—" }}</td>
                     
-                    <!-- NOUVELLE COLONNE STATUT COTISATION -->
+                    <!-- COLONNE STATUT COTISATION AVEC CARENCE -->
                     <td>
                         {% if m.statut_cotisation == 'À jour' %}
                             <span class="badge-custom badge-success"><i class="bi bi-check-circle-fill me-1"></i> À jour</span>
                         {% elif m.statut_cotisation == 'En retard' %}
                             <span class="badge-custom badge-danger"><i class="bi bi-exclamation-circle-fill me-1"></i> En retard</span>
+                        {% elif m.statut_cotisation == 'En carence' %}
+                            <span class="badge-custom badge-warning"><i class="bi bi-hourglass-split me-1"></i> En carence</span>
                         {% else %}
                             <span class="badge-custom bg-secondary text-white">{{ m.statut_cotisation }}</span>
                         {% endif %}

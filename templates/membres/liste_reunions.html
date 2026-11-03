@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Réunions{% endblock %}
+{% block page_title %}Organisation des Réunions{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <p class="text-muted mb-0">Planifiez et suivez les réunions de l'association.</p>
+    <a href="{% url 'ajouter_reunion' %}" class="btn-primary-custom">
+        <i class="bi bi-calendar-plus"></i> Programmer une réunion
+    </a>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Titre</th>
+                    <th>Date & Heure</th>
+                    <th>Lieu</th>
+                    <th>Groupe</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reunions %}
+                <tr>
+                    <td class="fw-bold">{{ r.titre }}</td>
+                    <td>{{ r.date_reunion|date:"d/m/Y à H:i" }}</td>
+                    <td class="text-muted"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ r.lieu }}</td>
+                    <td><span class="badge bg-primary bg-opacity-10 text-primary">{{ r.groupe.nom }}</span></td>
+                    <td class="text-end text-nowrap">
+                        <a href="{% url 'modifier_reunion' r.pk %}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle" title="Modifier" style="width:32px; height:32px; padding:5px;">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'supprimer_reunion' r.pk %}" class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Supprimer" style="width:32px; height:32px; padding:5px;">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Aucune réunion programmée.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

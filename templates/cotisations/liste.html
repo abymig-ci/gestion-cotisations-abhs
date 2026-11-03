@@ -55,7 +55,16 @@
                 {% for c in cotisations %}
                 <tr>
                     <td class="fw-medium">{{ c.membre }}</td>
-                    <td>{{ c.get_type_cotisation_display }}</td>
+                    <td>
+                        <!-- BADGES POUR LES TYPES DE COTISATION -->
+                        {% if c.type_cotisation == 'exceptionnelle' %}
+                            <span class="badge bg-danger">Exceptionnelle</span>
+                        {% elif c.type_cotisation == 'adhesion' %}
+                            <span class="badge bg-primary">Droit d'adhésion</span>
+                        {% else %}
+                            {{ c.get_type_cotisation_display }}
+                        {% endif %}
+                    </td>
                     <td>
                         {% if c.type_cotisation == 'mensuelle' %}
                             <span class="text-muted">{{ c.get_mois_display }} {{ c.annee }}</span>

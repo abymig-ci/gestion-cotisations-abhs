@@ -14,16 +14,35 @@
             <h4 class="fw-bold mb-1">{{ membre.nom|upper }}</h4>
             <p class="text-muted mb-3">{{ membre.prenom }}</p>
             
-            <!-- BLOC AJOUTÉ : Poste et Groupe -->
-            <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
-                <!-- Badge Poste -->
+            <!-- ALERTE DE CARENCE -->
+            {% if membre.statut_cotisation == 'En carence' %}
+            <div class="alert alert-warning py-2 mb-3 small">
+                <i class="bi bi-info-circle-fill me-1"></i> 
+                En période de carence jusqu'au <strong>{{ membre.date_fin_carence|date:"d/m/Y" }}</strong>.
+            </div>
+            {% endif %}
+            
+            <!-- BLOC : Poste et Groupe -->
+            <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
                 <span class="badge bg-primary text-white px-3 py-2 rounded-pill shadow-sm">
                     <i class="bi bi-briefcase-fill me-1"></i> {{ membre.poste.nom|default:"Sans poste" }}
                 </span>
-                <!-- Badge Groupe -->
                 <span class="badge bg-info text-dark px-3 py-2 rounded-pill shadow-sm">
                     <i class="bi bi-people-fill me-1"></i> {{ membre.groupe.nom|default:"Sans groupe" }}
                 </span>
+            </div>
+
+            <!-- BADGE STATUT COTISATION -->
+            <div class="mb-4">
+                {% if membre.statut_cotisation == 'À jour' %}
+                    <span class="badge bg-success px-4 py-2 rounded-pill shadow-sm fs-6"><i class="bi bi-check-circle-fill me-1"></i> Cotisations à jour</span>
+                {% elif membre.statut_cotisation == 'En retard' %}
+                    <span class="badge bg-danger px-4 py-2 rounded-pill shadow-sm fs-6"><i class="bi bi-exclamation-circle-fill me-1"></i> Cotisations en retard</span>
+                {% elif membre.statut_cotisation == 'En carence' %}
+                    <span class="badge bg-warning text-dark px-4 py-2 rounded-pill shadow-sm fs-6"><i class="bi bi-hourglass-split me-1"></i> En carence</span>
+                {% else %}
+                    <span class="badge bg-secondary px-4 py-2 rounded-pill shadow-sm fs-6">{{ membre.statut_cotisation }}</span>
+                {% endif %}
             </div>
             
             <div class="bg-light rounded-3 p-3 mb-4 text-start">
@@ -57,14 +76,34 @@
                         {% for c in cotisations %}
                         <tr>
                             <td>
-                                <div class="fw-medium">{{ c.get_type_cotisation_display }}</div>
-                                <div class="text-muted small">{% if c.type_cotisation == 'mensuelle' %}{{ c.get_mois_display }} {{ c.annee }}{% else %}{{ c.libelle }}{% endif %}</div>
+                                <!-- BADGES POUR LES DIFFÉRENTS TYPES -->
+                                {% if c.type_cotisation == 'exceptionnelle' %}
+                                    <span class="badge bg-danger mb-1">Exceptionnelle</span>
+                                {% elif c.type_cotisation == 'adhesion' %}
+                                    <span class="badge bg-primary mb-1">Droit d'adhésion</span>
+                                {% else %}
+                                    <div class="fw-medium">{{ c.get_type_cotisation_display }}</div>
+                                {% endif %}
+                                
+                                <div class="text-muted small">
+                                    {% if c.type_cotisation == 'mensuelle' %}
+                                        {{ c.get_mois_display }} {{ c.annee }}
+                                    {% elif c.type_cotisation == 'adhesion' %}
+                                        Frais d'inscription
+                                    {% else %}
+                                        {{ c.libelle }}
+                                    {% endif %}
+                                </div>
                             </td>
                             <td class="fw-bold">{{ c.montant|floatformat:0 }} FCFA</td>
                             <td>
-                                {% if c.statut == 'payee' %}<span class="badge-custom badge-success">Payée</span>
-                                {% elif c.statut == 'retard' %}<span class="badge-custom badge-danger">En retard</span>
-                                {% else %}<span class="badge-custom badge-warning">En attente</span>{% endif %}
+                                {% if c.statut == 'payee' %}
+                                    <span class="badge-custom badge-success">Payée</span>
+                                {% elif c.date_echeance < today %}
+                                    <span class="badge-custom badge-danger">En retard</span>
+                                {% else %}
+                                    <span class="badge-custom badge-warning">En attente</span>
+                                {% endif %}
                             </td>
                             <td class="text-muted">{{ c.date_paiement|date:"d/m/Y"|default:"—" }}</td>
                         </tr>

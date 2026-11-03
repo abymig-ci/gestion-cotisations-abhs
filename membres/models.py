@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from dateutil.relativedelta import relativedelta
+from datetime import date
 
 
 class Poste(models.Model):
@@ -26,6 +28,28 @@ class Groupe(models.Model):
 
     def __str__(self):
         return self.nom
+
+
+class Reunion(models.Model):
+    titre = models.CharField(max_length=200, help_text="Ex: Réunion de bureau, Assemblée générale...")
+    date_reunion = models.DateTimeField()
+    lieu = models.CharField(max_length=200)
+    groupe = models.ForeignKey(
+        Groupe, 
+        on_delete=models.CASCADE, 
+        related_name='reunions',
+        verbose_name="Groupe organisateur"
+    )
+    description = models.TextField(blank=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date_reunion']
+        verbose_name = "Réunion"
+        verbose_name_plural = "Réunions"
+
+    def __str__(self):
+        return f"{self.titre} - {self.date_reunion.strftime('%d/%m/%Y')}"
 
 
 class Membre(models.Model):
@@ -74,38 +98,50 @@ class Membre(models.Model):
     def __str__(self):
         return f"{self.nom} {self.prenom}"
 
-    # --- NOUVELLE LOGIQUE DE STATUT DE COTISATION ---
+    @property
+    def date_fin_carence(self):
+        return self.date_adhesion + relativedelta(months=6)
+
     @property
     def statut_cotisation(self):
         aujourd_hui = timezone.now().date()
         
-        # 1. Un membre inactif ou suspendu n'est pas considéré comme en retard de cotisation
         if self.statut != 'actif':
             return "Non applicable"
-        
-        # 2. On vérifie s'il y a des cotisations impayées dont l'échéance est dépassée
-        retards = self.cotisations.filter(
-            statut='en_attente', 
-            date_echeance__lt=aujourd_hui
-        ).count()
-        
-        if retards > 0:
-            return "En retard"
-            
-        # 3. On vérifie s'il est à jour pour le mois en cours (ou s'il a payé d'avance)
-        mois_actuel = aujourd_hui.month
-        annee_actuelle = aujourd_hui.year
-        
-        # On regarde s'il y a une cotisation payée pour ce mois ou un mois futur
-        est_a_jour = self.cotisations.filter(
-            type_cotisation='mensuelle',
-            statut='payee',
-            annee__gte=annee_actuelle,
-        ).filter(
-            models.Q(annee__gt=annee_actuelle) | models.Q(mois__gte=mois_actuel)
+
+        # --- 1. PÉRIODE DE CARENCE (6 MOIS) ---
+        if aujourd_hui < self.date_fin_carence:
+            return "En carence"
+
+        # --- 2. COTISATIONS EXCEPTIONNELLES IMPAYÉES ---
+        a_des_exceptionnelles_impayees = self.cotisations.filter(
+            type_cotisation='exceptionnelle',
+            statut='en_attente'
         ).exists()
         
-        if not est_a_jour:
+        if a_des_exceptionnelles_impayees:
             return "En retard"
-            
+
+        # --- 3. COTISATIONS MENSUELLES (vs Dernière réunion du groupe) ---
+        if self.groupe:
+            derniere_reunion = self.groupe.reunions.order_by('-date_reunion').first()
+            if derniere_reunion:
+                date_reunion = derniere_reunion.date_reunion.date()
+                # La date limite est 3 mois avant la réunion
+                date_limite = date_reunion - relativedelta(months=3)
+                
+                # Dernière cotisation mensuelle payée
+                derniere_cot = self.cotisations.filter(
+                    type_cotisation='mensuelle',
+                    statut='payee'
+                ).order_by('-annee', '-mois').first()
+
+                if derniere_cot:
+                    date_paiement = date(derniere_cot.annee, derniere_cot.mois, 1)
+                    if date_paiement < date_limite:
+                        return "En retard"
+                else:
+                    # Aucune mensuelle payée et plus en carence
+                    return "En retard"
+
         return "À jour"

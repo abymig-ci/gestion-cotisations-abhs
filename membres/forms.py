@@ -1,5 +1,6 @@
 from django import forms
 from .models import Membre, Groupe, Poste
+from .models import Membre, Groupe, Poste, Reunion
 
 
 class MembreForm(forms.ModelForm):
@@ -48,3 +49,20 @@ class PosteForm(forms.ModelForm):
         widgets = {
             'nom': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Président(e)'}),
         }
+
+class ReunionForm(forms.ModelForm):
+    class Meta:
+        model = Reunion
+        fields = ['titre', 'date_reunion', 'lieu', 'groupe', 'description']
+        widgets = {
+            'titre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Assemblée Générale'}),
+            'date_reunion': forms.DateTimeInput(format='%Y-%m-%dT%H:%M', attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'lieu': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Salle de réunion CHR Daloa'}),
+            'groupe': forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and self.instance.date_reunion:
+            self.initial['date_reunion'] = self.instance.date_reunion.strftime('%Y-%m-%dT%H:%M')

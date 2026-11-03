@@ -11,6 +11,10 @@ urlpatterns = [
     path('groupes/<int:pk>/modifier/', views.modifier_groupe, name='modifier_groupe'),
     path('groupes/<int:pk>/supprimer/', views.supprimer_groupe, name='supprimer_groupe'),
     path('postes/<int:pk>/modifier/', views.modifier_poste, name='modifier_poste'),
+    path('reunions/', views.liste_reunions, name='liste_reunions'),
+    path('reunions/ajouter/', views.ajouter_reunion, name='ajouter_reunion'),
+    path('reunions/<int:pk>/modifier/', views.modifier_reunion, name='modifier_reunion'),
+    path('reunions/<int:pk>/supprimer/', views.supprimer_reunion, name='supprimer_reunion'),
     
     # URLs pour les Groupes
     path('groupes/', views.liste_groupes, name='liste_groupes'),

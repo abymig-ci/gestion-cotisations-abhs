@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer la réunion{% endblock %}
+{% block page_title %}Confirmer la suppression{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card-custom p-5 text-center border-danger">
+            <i class="bi bi-exclamation-triangle text-danger display-4 mb-3"></i>
+            <h4 class="fw-bold">Supprimer la réunion ?</h4>
+            <p class="text-muted mb-4">
+                Voulez-vous vraiment supprimer la réunion <strong>{{ reunion.titre }}</strong> du {{ reunion.date_reunion|date:"d/m/Y" }} ?
+            </p>
+            <form method="post" class="d-flex justify-content-center gap-3">
+                {% csrf_token %}
+                <a href="{% url 'liste_reunions' %}" class="btn-outline-custom px-4 py-2">Annuler</a>
+                <button type="submit" class="btn btn-danger px-4 py-2">Oui, supprimer</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

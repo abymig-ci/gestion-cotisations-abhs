@@ -3,11 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
+from django.utils import timezone  # <-- L'import manquant est ajouté ici
 from decimal import Decimal
 
-from .models import Membre, Groupe, Poste
-from .forms import MembreForm, GroupeForm, PosteForm
-
+from .models import Membre, Groupe, Poste, Reunion
+from .forms import MembreForm, GroupeForm, PosteForm, ReunionForm
 
 @login_required
 def liste_membres(request):
@@ -68,6 +68,7 @@ def detail_membre(request, pk):
         'membre': membre,
         'cotisations': cotisations,
         'total': total,
+        'today': timezone.now().date(),  # <-- AJOUTER CETTE LIGNE
     })
 
 
@@ -155,3 +156,42 @@ def modifier_poste(request, pk):
     else:
         form = PosteForm(instance=poste)
     return render(request, 'membres/form_poste.html', {'form': form, 'titre': 'Modifier le Poste'})
+
+@login_required
+def liste_reunions(request):
+    reunions = Reunion.objects.select_related('groupe').all()
+    return render(request, 'membres/liste_reunions.html', {'reunions': reunions})
+
+@login_required
+def ajouter_reunion(request):
+    if request.method == 'POST':
+        form = ReunionForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Réunion programmée avec succès.")
+            return redirect('liste_reunions')
+    else:
+        form = ReunionForm()
+    return render(request, 'membres/form_reunion.html', {'form': form, 'titre': 'Programmer une réunion'})
+
+@login_required
+def modifier_reunion(request, pk):
+    reunion = get_object_or_404(Reunion, pk=pk)
+    if request.method == 'POST':
+        form = ReunionForm(request.POST, instance=reunion)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Réunion modifiée avec succès.")
+            return redirect('liste_reunions')
+    else:
+        form = ReunionForm(instance=reunion)
+    return render(request, 'membres/form_reunion.html', {'form': form, 'titre': 'Modifier la réunion'})
+
+@login_required
+def supprimer_reunion(request, pk):
+    reunion = get_object_or_404(Reunion, pk=pk)
+    if request.method == 'POST':
+        reunion.delete()
+        messages.success(request, "Réunion supprimée.")
+        return redirect('liste_reunions')
+    return render(request, 'membres/confirmer_suppression_reunion.html', {'reunion': reunion})
