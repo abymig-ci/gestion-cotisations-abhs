@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Nouvelle cotisation exceptionnelle{% endblock %}
+{% block page_title %}Lancer une cotisation exceptionnelle{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card-custom p-4 p-md-5">
+            <div class="alert alert-info py-3 mb-4">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong>Comment ça marche ?</strong><br>
+                <ul class="mb-0 mt-2">
+                    <li><strong>Collective :</strong> Tous les membres actifs sont concernés.</li>
+                    <li><strong>Individuelle :</strong> Le membre choisi est <u>exclu</u> de la cotisation. Tous les autres membres cotisent.</li>
+                </ul>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger rounded-3">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="row g-4">
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold text-dark small">Type de cotisation</label>
+                        {{ form.type_cotisation }}
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold text-dark small">Membre bénéficiaire (uniquement si individuelle)</label>
+                        {{ form.membre_beneficiaire }}
+                        {% if form.membre_beneficiaire.errors %}
+                            <div class="text-danger small mt-1">{{ form.membre_beneficiaire.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold text-dark small">Motif / Libellé</label>
+                        {{ form.libelle }}
+                        {% if form.libelle.errors %}
+                            <div class="text-danger small mt-1">{{ form.libelle.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark small">Montant par membre (FCFA)</label>
+                        {{ form.montant }}
+                        {% if form.montant.errors %}
+                            <div class="text-danger small mt-1">{{ form.montant.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Le champ date d'échéance est remplacé par cette note -->
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="alert alert-warning py-2 mb-0 w-100">
+                            <i class="bi bi-info-circle-fill me-1"></i>
+                            La cotisation sera considérée comme <strong>"En retard"</strong> dès demain si elle n'est pas marquée comme payée.
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4 border-light">
+                
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'liste_cotisations' %}" class="btn-outline-custom py-2 px-4">Annuler</a>
+                    <button type="submit" class="btn-primary-custom py-2 px-4"><i class="bi bi-megaphone-fill"></i> Lancer la cotisation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

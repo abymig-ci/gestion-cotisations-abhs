@@ -9,4 +9,5 @@ urlpatterns = [
     path('cotisations/<int:pk>/modifier/', views.modifier_cotisation, name='modifier_cotisation'),
     path('cotisations/<int:pk>/payee/', views.marquer_payee, name='marquer_payee'),
     path('cotisations/<int:pk>/supprimer/', views.supprimer_cotisation, name='supprimer_cotisation'),
+    path('cotisations/exceptionnelle/ajouter/', views.creer_cotisation_exceptionnelle, name='creer_cotisation_exceptionnelle'),
 ]

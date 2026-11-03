@@ -7,6 +7,7 @@ class Cotisation(models.Model):
     TYPE_CHOICES = [
         ('mensuelle', 'Mensuelle'),
         ('exceptionnelle', 'Exceptionnelle'),
+        ('adhesion', "Droit d'adhésion"),
     ]
     STATUT_CHOICES = [
         ('en_attente', 'En attente'),
@@ -28,6 +29,14 @@ class Cotisation(models.Model):
     montant = models.DecimalField(max_digits=10, decimal_places=2)
     mois = models.IntegerField(choices=MOIS_CHOICES, null=True, blank=True)
     annee = models.IntegerField(default=timezone.now().year)
+    
+    # Le champ nombre_mois est bien à l'intérieur de la classe
+    nombre_mois = models.IntegerField(
+        null=True, 
+        blank=True, 
+        help_text="Remplir si le membre paie plusieurs mois d'avance"
+    )
+    
     date_echeance = models.DateField()
     date_paiement = models.DateField(null=True, blank=True)
     statut = models.CharField(

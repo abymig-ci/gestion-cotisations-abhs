@@ -25,7 +25,7 @@
                 <tr>
                     <th>Membre</th>
                     <th>Téléphone</th>
-                    <th>Statut</th>
+                    <th>Statut Cotisation</th> <!-- Changement de titre -->
                     <th>Cotisations</th>
                     <th>Total payé</th>
                     <th class="text-end">Actions</th>
@@ -42,17 +42,26 @@
                             <div>
                                 <div class="fw-bold fs-5 mb-0">{{ m.nom|upper }}</div>
                                 <div class="text-muted fs-6">{{ m.prenom }}</div>
-                                <!-- Modification ici : m.poste.nom au lieu de get_poste_display -->
-                                <div class="badge bg-primary bg-opacity-10 text-primary mt-1">{{ m.poste.nom|default:"—" }}</div>
+                                <div class="d-flex gap-1 mt-1 flex-wrap">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary">{{ m.poste.nom|default:"Sans poste" }}</span>
+                                    <span class="badge bg-info bg-opacity-10 text-dark">{{ m.groupe.nom|default:"Sans groupe" }}</span>
+                                </div>
                             </div>
                         </div>
                     </td>
                     <td class="text-muted">{{ m.telephone|default:"—" }}</td>
+                    
+                    <!-- NOUVELLE COLONNE STATUT COTISATION -->
                     <td>
-                        {% if m.statut == 'actif' %}<span class="badge-custom badge-success">Actif</span>
-                        {% elif m.statut == 'inactif' %}<span class="badge-custom bg-secondary text-white">Inactif</span>
-                        {% else %}<span class="badge-custom badge-danger">Suspendu</span>{% endif %}
+                        {% if m.statut_cotisation == 'À jour' %}
+                            <span class="badge-custom badge-success"><i class="bi bi-check-circle-fill me-1"></i> À jour</span>
+                        {% elif m.statut_cotisation == 'En retard' %}
+                            <span class="badge-custom badge-danger"><i class="bi bi-exclamation-circle-fill me-1"></i> En retard</span>
+                        {% else %}
+                            <span class="badge-custom bg-secondary text-white">{{ m.statut_cotisation }}</span>
+                        {% endif %}
                     </td>
+                    
                     <td><span class="badge bg-light text-dark border">{{ m.nb_cotisations }}</span></td>
                     <td class="fw-bold">{{ m.total_paye|default:0|floatformat:0 }} <small>FCFA</small></td>
                     <td class="text-end text-nowrap">
@@ -62,7 +71,6 @@
                         <a href="{% url 'modifier_membre' m.pk %}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle" title="Modifier" style="width:32px; height:32px; padding:5px;">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <!-- AJOUT DU BOUTON SUPPRIMER -->
                         <a href="{% url 'supprimer_membre' m.pk %}" class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Supprimer" style="width:32px; height:32px; padding:5px;">
                             <i class="bi bi-trash"></i>
                         </a>

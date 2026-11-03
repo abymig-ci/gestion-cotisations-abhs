@@ -5,9 +5,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <p class="text-muted mb-0">Retrouvez ici l'historique complet des cotisations des membres.</p>
-    <a href="{% url 'ajouter_cotisation' %}" class="btn-primary-custom">
-        <i class="bi bi-plus-lg"></i> Nouvelle cotisation
-    </a>
+    <div class="d-flex gap-2">
+        <a href="{% url 'creer_cotisation_exceptionnelle' %}" class="btn btn-outline-danger">
+            <i class="bi bi-megaphone-fill"></i> Cotisation exceptionnelle
+        </a>
+        <a href="{% url 'ajouter_cotisation' %}" class="btn-primary-custom">
+            <i class="bi bi-plus-lg"></i> Nouvelle cotisation
+        </a>
+    </div>
 </div>
 
 <div class="card-custom mb-4 p-3 bg-white">
@@ -18,15 +23,15 @@
                 <option value="">Tous les types</option>
                 <option value="mensuelle" {% if type_filter == 'mensuelle' %}selected{% endif %}>Mensuelle</option>
                 <option value="exceptionnelle" {% if type_filter == 'exceptionnelle' %}selected{% endif %}>Exceptionnelle</option>
+                <option value="adhesion" {% if type_filter == 'adhesion' %}selected{% endif %}>Droit d'adhésion</option>
             </select>
         </div>
         <div class="col-md-4">
             <label class="form-label text-muted small fw-bold">Statut</label>
             <select name="statut" class="form-select border-0 bg-light" onchange="this.form.submit()">
                 <option value="">Tous les statuts</option>
-                <option value="en_attente" {% if statut_filter == 'en_attente' %}selected{% endif %}>En attente</option>
+                <option value="en_attente" {% if statut_filter == 'en_attente' %}selected{% endif %}>En attente / En retard</option>
                 <option value="payee" {% if statut_filter == 'payee' %}selected{% endif %}>Payée</option>
-                <option value="retard" {% if statut_filter == 'retard' %}selected{% endif %}>En retard</option>
             </select>
         </div>
     </form>
@@ -54,6 +59,8 @@
                     <td>
                         {% if c.type_cotisation == 'mensuelle' %}
                             <span class="text-muted">{{ c.get_mois_display }} {{ c.annee }}</span>
+                        {% elif c.type_cotisation == 'adhesion' %}
+                            <span class="text-muted">Frais d'inscription</span>
                         {% else %}
                             {{ c.libelle|default:"—" }}
                         {% endif %}
@@ -63,7 +70,7 @@
                     <td>
                         {% if c.statut == 'payee' %}
                             <span class="badge-custom badge-success">Payée</span>
-                        {% elif c.statut == 'retard' %}
+                        {% elif c.date_echeance < today %}
                             <span class="badge-custom badge-danger">En retard</span>
                         {% else %}
                             <span class="badge-custom badge-warning">En attente</span>
