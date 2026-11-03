@@ -10,6 +10,7 @@ urlpatterns = [
     path('<int:pk>/supprimer/', views.supprimer_membre, name='supprimer_membre'),
     path('groupes/<int:pk>/modifier/', views.modifier_groupe, name='modifier_groupe'),
     path('groupes/<int:pk>/supprimer/', views.supprimer_groupe, name='supprimer_groupe'),
+    path('postes/<int:pk>/modifier/', views.modifier_poste, name='modifier_poste'),
     
     # URLs pour les Groupes
     path('groupes/', views.liste_groupes, name='liste_groupes'),

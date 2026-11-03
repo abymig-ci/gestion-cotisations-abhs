@@ -25,9 +25,13 @@
                 <tr>
                     <td class="fw-bold text-primary">{{ p.nom }}</td>
                     <td><span class="badge bg-light text-dark border">{{ p.nb_membres }} membre(s)</span></td>
-                    <td class="text-end">
-                        <a href="{% url 'liste_membres' %}?poste={{ p.id }}" class="btn btn-sm btn-outline-primary border-0 rounded-circle" title="Voir les membres">
+                    <td class="text-end text-nowrap">
+                        <a href="{% url 'liste_membres' %}?poste={{ p.id }}" class="btn btn-sm btn-outline-primary border-0 rounded-circle" title="Voir les membres" style="width:32px; height:32px; padding:5px;">
                             <i class="bi bi-eye"></i>
+                        </a>
+                        <!-- BOUTON MODIFIER AJOUTÉ ICI -->
+                        <a href="{% url 'modifier_poste' p.pk %}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle" title="Modifier" style="width:32px; height:32px; padding:5px;">
+                            <i class="bi bi-pencil"></i>
                         </a>
                     </td>
                 </tr>

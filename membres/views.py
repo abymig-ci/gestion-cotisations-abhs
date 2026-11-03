@@ -142,3 +142,16 @@ def supprimer_membre(request, pk):
         messages.success(request, "Le membre a été supprimé avec succès.")
         return redirect('liste_membres')
     return render(request, 'membres/confirmer_suppression.html', {'membre': membre})
+
+@login_required
+def modifier_poste(request, pk):
+    poste = get_object_or_404(Poste, pk=pk)
+    if request.method == 'POST':
+        form = PosteForm(request.POST, instance=poste)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Poste modifié avec succès.")
+            return redirect('liste_postes')
+    else:
+        form = PosteForm(instance=poste)
+    return render(request, 'membres/form_poste.html', {'form': form, 'titre': 'Modifier le Poste'})
