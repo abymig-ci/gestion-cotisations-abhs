@@ -5,6 +5,17 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-6">
+        
+        <!-- BLOC POUR AFFICHER LE MESSAGE D'ERREUR EN BLANC SUR ROUGE -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-dismissible fade show shadow-sm text-white fw-bold mb-4" style="background-color: #dc3545; border-color: #dc3545;" role="alert">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i> {{ message }}
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <div class="card-custom p-5 text-center border-danger">
             <i class="bi bi-exclamation-triangle text-danger display-4 mb-3"></i>
             <h4 class="fw-bold">Êtes-vous sûr ?</h4>

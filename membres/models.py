@@ -106,43 +106,52 @@ class Membre(models.Model):
     def statut_cotisation(self):
         aujourd_hui = timezone.now().date()
         
-        if self.statut != 'actif':
-            return "Non applicable"
+        if self.statut == 'inactif':
+            return "Inactif"
+        if self.statut == 'suspendu':
+            return "Suspendu"
 
-        # --- 1. PÉRIODE DE CARENCE (6 MOIS) ---
+        # 1. Période de carence
         if aujourd_hui < self.date_fin_carence:
             return "En carence"
 
-        # --- 2. COTISATIONS EXCEPTIONNELLES IMPAYÉES ---
-        a_des_exceptionnelles_impayees = self.cotisations.filter(
-            type_cotisation='exceptionnelle',
-            statut='en_attente'
-        ).exists()
-        
-        if a_des_exceptionnelles_impayees:
+        # 2. Cotisations exceptionnelles impayées
+        if self.cotisations.filter(type_cotisation='exceptionnelle', statut='en_attente').exists():
             return "En retard"
 
-        # --- 3. COTISATIONS MENSUELLES (vs Dernière réunion du groupe) ---
-        if self.groupe:
-            derniere_reunion = self.groupe.reunions.order_by('-date_reunion').first()
-            if derniere_reunion:
-                date_reunion = derniere_reunion.date_reunion.date()
-                # La date limite est 3 mois avant la réunion
-                date_limite = date_reunion - relativedelta(months=3)
-                
-                # Dernière cotisation mensuelle payée
-                derniere_cot = self.cotisations.filter(
-                    type_cotisation='mensuelle',
-                    statut='payee'
-                ).order_by('-annee', '-mois').first()
+        # 3. Cotisations mensuelles par rapport à la dernière réunion passée (TOUS GROUPES CONFONDUS)
+        # On cherche la réunion la plus récente qui a DÉJÀ eu lieu
+        derniere_reunion = Reunion.objects.filter(date_reunion__lte=timezone.now()).order_by('-date_reunion').first()
+        
+        if derniere_reunion:
+            date_reunion = derniere_reunion.date_reunion.date()
+            # La date limite est 3 mois avant la réunion
+            date_limite = date_reunion - relativedelta(months=4)
+            
+            derniere_cot = self.cotisations.filter(
+                type_cotisation='mensuelle',
+                statut='payee'
+            ).order_by('-annee', '-mois').first()
 
-                if derniere_cot:
-                    date_paiement = date(derniere_cot.annee, derniere_cot.mois, 1)
-                    if date_paiement < date_limite:
-                        return "En retard"
-                else:
-                    # Aucune mensuelle payée et plus en carence
+            if derniere_cot:
+                date_paiement = date(derniere_cot.annee, derniere_cot.mois, 1)
+                # Si le dernier paiement est antérieur à la date limite, il est en retard
+                if date_paiement < date_limite:
                     return "En retard"
+            else:
+                # Aucune mensuelle payée et plus en carence
+                return "En retard"
+        else:
+            # S'il n'y a eu AUCUNE réunion dans l'association pour le moment
+            # On vérifie qu'il a payé au moins une fois ce mois-ci ou le mois dernier
+            derniere_cot = self.cotisations.filter(type_cotisation='mensuelle', statut='payee').order_by('-annee', '-mois').first()
+            if derniere_cot:
+                mois_paiement_absolu = derniere_cot.annee * 12 + derniere_cot.mois
+                mois_actuel_absolu = aujourd_hui.year * 12 + aujourd_hui.month
+                if mois_paiement_absolu < (mois_actuel_absolu - 1):
+                    return "En retard"
+            else:
+                return "En retard"
 
         return "À jour"
 # Version finale du 04/11/2026

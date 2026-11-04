@@ -21,7 +21,6 @@
             <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-grid-1x2-fill"></i> Tableau de bord</a></li>
             <li><a href="{% url 'liste_cotisations' %}" class="{% if 'cotisation' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Cotisations</a></li>
             <li><a href="{% url 'liste_membres' %}" class="{% if 'membre' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people-fill"></i> Membres</a></li>
-            <!-- LIEN RÉUNIONS AJOUTÉ ICI -->
             <li><a href="{% url 'liste_reunions' %}" class="{% if 'reunion' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-calendar-event-fill"></i> Réunions</a></li>
             <li><a href="{% url 'liste_groupes' %}" class="{% if 'groupe' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-diagram-3-fill"></i> Groupes</a></li>
             <li><a href="{% url 'liste_postes' %}" class="{% if 'poste' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-person-badge-fill"></i> Postes</a></li>
@@ -58,7 +57,8 @@
         {% if messages %}
             <div class="position-relative">
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-custom shadow-sm" style="transition: opacity 0.3s;">
+                    <!-- AJOUT DE text-white fw-bold -->
+                    <div class="alert alert-{{ message.tags }} alert-custom shadow-sm text-white fw-bold" style="transition: opacity 0.3s;">
                         {{ message }}
                     </div>
                 {% endfor %}

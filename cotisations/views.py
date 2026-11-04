@@ -197,10 +197,37 @@ def marquer_payee(request, pk):
 @login_required
 def supprimer_cotisation(request, pk):
     cotisation = get_object_or_404(Cotisation, pk=pk)
+    
     if request.method == 'POST':
+        # --- VÉRIFICATION POUR LES COTISATIONS MENSUELLES ---
+        if cotisation.type_cotisation == 'mensuelle':
+            derniere_mensuelle = Cotisation.objects.filter(
+                membre=cotisation.membre, 
+                type_cotisation='mensuelle'
+            ).order_by('-annee', '-mois').first()
+            
+            if derniere_mensuelle and derniere_mensuelle.pk != cotisation.pk:
+                messages.error(request, "Seule la dernière cotisation mensuelle peut être supprimée.")
+                # On réaffiche la page avec l'erreur au lieu de rediriger
+                return render(request, 'cotisations/confirmer_suppression.html', {'cotisation': cotisation})
+                
+        # --- VÉRIFICATION POUR LES COTISATIONS EXCEPTIONNELLES ---
+        elif cotisation.type_cotisation == 'exceptionnelle':
+            derniere_exceptionnelle = Cotisation.objects.filter(
+                membre=cotisation.membre, 
+                type_cotisation='exceptionnelle'
+            ).order_by('-date_creation').first()
+            
+            if derniere_exceptionnelle and derniere_exceptionnelle.pk != cotisation.pk:
+                messages.error(request, "Seule la dernière cotisation exceptionnelle peut être supprimée.")
+                # On réaffiche la page avec l'erreur au lieu de rediriger
+                return render(request, 'cotisations/confirmer_suppression.html', {'cotisation': cotisation})
+
+        # Si les règles sont respectées, on supprime
         cotisation.delete()
-        messages.success(request, "Cotisation supprimée.")
+        messages.success(request, "Cotisation supprimée avec succès.")
         return redirect('liste_cotisations')
+        
     return render(request, 'cotisations/confirmer_suppression.html', {
         'cotisation': cotisation,
     })
