@@ -145,3 +145,4 @@ class Membre(models.Model):
                     return "En retard"
 
         return "À jour"
+# Version finale du 04/11/2026
