@@ -120,4 +120,26 @@
 <div class="mt-4">
     <a href="{% url 'liste_membres' %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
 </div>
+{% if user.is_superuser %}
+<div class="mt-5 p-3 bg-dark text-white rounded small">
+    <h6>🔧 DEBUG (Admin uniquement)</h6>
+    <p>Date du serveur : {{ today|date:"d/m/Y" }}</p>
+    <p>Statut calculé : {{ membre.statut_cotisation }}</p>
+    <p>Date d'adhésion : {{ membre.date_adhesion|date:"d/m/Y" }}</p>
+    <p>Fin de carence : {{ membre.date_fin_carence|date:"d/m/Y" }}</p>
+    <p>Groupe : {{ membre.groupe.nom|default:"Aucun" }}</p>
+    {% if membre.groupe %}
+        <p>Dernière réunion du groupe : 
+            {% with reu=membre.groupe.reunions.first %}
+                {% if reu %}
+                    {{ reu.date_reunion|date:"d/m/Y" }} ({{ reu.titre }})
+                {% else %}
+                    Aucune réunion programmée
+                {% endif %}
+            {% endwith %}
+        </p>
+    {% endif %}
+    <p>Cotisations exceptionnelles impayées : {{ membre.cotisations.filter_statut_impaye.count|default:"0" }}</p>
+</div>
+{% endif %}
 {% endblock %}
