@@ -2,7 +2,7 @@
 
 :root {
     /* Couleurs basées sur le logo */
-    --primary: #0a1c5c; /* Bleu marine profond */
+    --primary: #0a1c5c;
     --primary-light: #1e3a8a;
     --primary-dark: #051033;
     --accent: #3b82f6;
@@ -39,15 +39,19 @@ body {
     display: flex;
     flex-direction: column;
     position: fixed;
+    top: 0;
+    bottom: 0;
     height: 100vh;
-    transition: var(--transition);
     z-index: 1000;
+    transition: var(--transition);
+    /* Suppression du overflow-y et padding-bottom sur le parent */
 }
 
 .sidebar-header {
     padding: 20px;
     text-align: center;
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
 }
 
 .sidebar-header img {
@@ -65,11 +69,13 @@ body {
     letter-spacing: 1px;
 }
 
+/* UN SEUL BLOC .sidebar-menu, propre */
 .sidebar-menu {
     list-style: none;
     padding: 20px 10px;
     margin: 0;
-    flex: 1;
+    flex: 1; /* Prend tout l'espace disponible */
+    overflow-y: auto; /* Permet le défilement si trop de liens */
 }
 
 .sidebar-menu li a {
@@ -94,9 +100,13 @@ body {
     font-size: 1.2rem;
 }
 
+/* Le footer reste bien collé en bas */
 .sidebar-footer {
     padding: 20px;
     border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: auto;
+    background: var(--primary-dark);
+    flex-shrink: 0;
 }
 
 /* --- MAIN CONTENT --- */
