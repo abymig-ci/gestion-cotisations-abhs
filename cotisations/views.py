@@ -33,11 +33,6 @@ class CotisationExceptionnelleForm(forms.Form):
         max_digits=10, decimal_places=2, 
         widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
-    # Le champ date_echeance est retiré
-    date_echeance = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
-    )
-
 
 @login_required
 def dashboard(request):
