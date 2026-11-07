@@ -4,6 +4,7 @@
 
 {% block content %}
 <div class="row g-4 mb-4">
+    <!-- Carte 1 : Membres actifs -->
     <div class="col-md-6 col-lg-3">
         <div class="card-custom kpi-card h-100">
             <div class="kpi-icon blue"><i class="bi bi-people"></i></div>
@@ -13,24 +14,30 @@
             </div>
         </div>
     </div>
+    
+    <!-- Carte 2 : Cotisation mensuelle -->
     <div class="col-md-6 col-lg-3">
         <div class="card-custom kpi-card h-100">
             <div class="kpi-icon green"><i class="bi bi-wallet2"></i></div>
             <div class="kpi-info">
                 <h3>{{ stats.cotisations_mois|floatformat:0 }}</h3>
-                <p>FCFA ce mois</p>
+                <p>FCFA par mois</p>
             </div>
         </div>
     </div>
+    
+    <!-- Carte 3 : Membres non à jour -->
     <div class="col-md-6 col-lg-3">
         <div class="card-custom kpi-card h-100">
             <div class="kpi-icon red"><i class="bi bi-exclamation-triangle"></i></div>
             <div class="kpi-info">
                 <h3>{{ stats.retards }}</h3>
-                <p>Retards constatés</p>
+                <p>Membres non à jour</p>
             </div>
         </div>
     </div>
+    
+    <!-- Carte 4 : Total année -->
     <div class="col-md-6 col-lg-3">
         <div class="card-custom kpi-card h-100">
             <div class="kpi-icon orange"><i class="bi bi-graph-up-arrow"></i></div>
@@ -52,17 +59,32 @@
             <div class="table-responsive">
                 <table class="table-custom">
                     <thead>
-                        <tr><th>Membre</th><th>Montant</th><th>Date</th></tr>
+                        <tr>
+                            <th>Membre</th>
+                            <th>Type</th>
+                            <th>Montant</th>
+                            <th>Date</th>
+                        </tr>
                     </thead>
                     <tbody>
                         {% for c in derniers_paiements %}
                         <tr>
                             <td class="fw-medium">{{ c.membre }}</td>
+                            <td>
+                                <!-- BADGES POUR LES TYPES DE COTISATION -->
+                                {% if c.type_cotisation == 'exceptionnelle' %}
+                                    <span class="badge bg-danger mb-1">Exceptionnelle</span>
+                                {% elif c.type_cotisation == 'adhesion' %}
+                                    <span class="badge bg-primary mb-1">Droit d'adhésion</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border">Mensuelle</span>
+                                {% endif %}
+                            </td>
                             <td class="text-success fw-bold">{{ c.montant|floatformat:0 }} FCFA</td>
                             <td class="text-muted">{{ c.date_paiement|date:"d/m/Y" }}</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="3" class="text-center text-muted py-3">Aucun paiement enregistré.</td></tr>
+                        <tr><td colspan="4" class="text-center text-muted py-3">Aucun paiement enregistré.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -70,26 +92,46 @@
         </div>
     </div>
 
-    <!-- Tableau Retards -->
+    <!-- Tableau Retards (Tous les membres non à jour) -->
     <div class="col-lg-6">
         <div class="card-custom h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-circle text-danger"></i> Cotisations en retard</h5>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-circle text-danger"></i> Membres non à jour</h5>
             </div>
             <div class="table-responsive">
                 <table class="table-custom">
                     <thead>
-                        <tr><th>Membre</th><th>Montant</th><th>Échéance</th></tr>
+                        <tr>
+                            <th>Membre</th>
+                            <th>Statut</th>
+                            <th class="text-end">Montant dû</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        {% for c in retards %}
+                        {% for item in retards %}
                         <tr>
-                            <td class="fw-medium">{{ c.membre }}</td>
-                            <td class="text-danger fw-bold">{{ c.montant|floatformat:0 }} FCFA</td>
-                            <td class="text-muted">{{ c.date_echeance|date:"d/m/Y" }}</td>
+                            <td class="fw-medium">
+                                <a href="{% url 'detail_membre' item.membre.pk %}" class="text-decoration-none text-dark">
+                                    {{ item.membre.nom|upper }} {{ item.membre.prenom }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if item.statut == 'En retard' %}
+                                    <span class="badge-custom badge-danger">En retard</span>
+                                {% elif item.statut == 'En carence' %}
+                                    <span class="badge-custom badge-warning">En carence</span>
+                                {% elif item.statut == 'Inactif' %}
+                                    <span class="badge-custom bg-secondary text-white">Inactif</span>
+                                {% elif item.statut == 'Suspendu' %}
+                                    <span class="badge-custom bg-dark text-white">Suspendu</span>
+                                {% else %}
+                                    <span class="badge-custom bg-secondary text-white">{{ item.statut }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end fw-bold text-danger">{{ item.montant_du|floatformat:0 }} FCFA</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="3" class="text-center text-muted py-3">Aucun retard. 🎉</td></tr>
+                        <tr><td colspan="3" class="text-center text-muted py-3">Tous les membres sont à jour. 🎉</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

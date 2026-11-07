@@ -1,11 +1,10 @@
 from django import forms
-from .models import Cotisation
+from .models import Cotisation, Parametre
 
 
 class CotisationForm(forms.ModelForm):
     class Meta:
         model = Cotisation
-        # On retire 'mois', 'annee', 'date_echeance' et 'statut'
         fields = [
             'membre', 'type_cotisation', 'montant', 'nombre_mois', 
             'date_paiement', 'libelle', 'observation'
@@ -22,17 +21,30 @@ class CotisationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
         if self.instance and self.instance.pk and self.instance.date_paiement:
             self.initial['date_paiement'] = self.instance.date_paiement.strftime('%Y-%m-%d')
+        
+        if not self.instance.pk:
+            parametre, _ = Parametre.objects.get_or_create(id=1)
+            self.initial['montant'] = parametre.montant_cotisation_mensuelle
 
     def clean(self):
         cleaned = super().clean()
         type_cot = cleaned.get('type_cotisation')
         membre = cleaned.get('membre')
 
-        # Règle du Droit d'adhésion unique
         if type_cot == 'adhesion' and membre:
             if Cotisation.objects.filter(membre=membre, type_cotisation='adhesion').exclude(pk=self.instance.pk).exists():
                 raise forms.ValidationError("Ce membre a déjà réglé son droit d'adhésion.")
 
         return cleaned
+
+
+class ParametreForm(forms.ModelForm):
+    class Meta:
+        model = Parametre
+        fields = ['montant_cotisation_mensuelle']
+        widgets = {
+            'montant_cotisation_mensuelle': forms.NumberInput(attrs={'class': 'form-control'}),
+        }

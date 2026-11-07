@@ -61,3 +61,18 @@ class Cotisation(models.Model):
         if self.type_cotisation == 'mensuelle':
             return f"{self.membre} - {self.get_mois_display()} {self.annee} - {self.montant} FCFA"
         return f"{self.membre} - {self.libelle} - {self.montant} FCFA"
+
+class Parametre(models.Model):
+    montant_cotisation_mensuelle = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=5000,
+        verbose_name="Montant de la cotisation mensuelle (FCFA)"
+    )
+    
+    class Meta:
+        verbose_name = "Paramètre"
+        verbose_name_plural = "Paramètres"
+
+    def __str__(self):
+        return f"Cotisation mensuelle : {self.montant_cotisation_mensuelle} FCFA"

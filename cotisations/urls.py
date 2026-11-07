@@ -10,4 +10,5 @@ urlpatterns = [
     path('cotisations/<int:pk>/payee/', views.marquer_payee, name='marquer_payee'),
     path('cotisations/<int:pk>/supprimer/', views.supprimer_cotisation, name='supprimer_cotisation'),
     path('cotisations/exceptionnelle/ajouter/', views.creer_cotisation_exceptionnelle, name='creer_cotisation_exceptionnelle'),
+    path('parametres/', views.parametres, name='parametres'),
 ]

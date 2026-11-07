@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Paramètres{% endblock %}
+{% block page_title %}Paramètres de l'association{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card-custom p-4 p-md-5">
+            <h4 class="fw-bold mb-4">Réglages généraux</h4>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small">{{ form.montant_cotisation_mensuelle.label }}</label>
+                    {{ form.montant_cotisation_mensuelle }}
+                    {% if form.montant_cotisation_mensuelle.errors %}
+                        <div class="text-danger small mt-1">{{ form.montant_cotisation_mensuelle.errors.0 }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">Ce montant sera utilisé pour calculer les sommes dues par les membres.</small>
+                </div>
+                <hr class="my-4 border-light">
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn-primary-custom"><i class="bi bi-save"></i> Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

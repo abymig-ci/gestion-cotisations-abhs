@@ -10,6 +10,8 @@ from django import forms
 from .models import Cotisation
 from .forms import CotisationForm
 from membres.models import Membre
+from .models import Cotisation, Parametre
+from .forms import CotisationForm, ParametreForm
 
 
 # --- FORMULAIRE POUR LA COTISATION EXCEPTIONNELLE ---
@@ -40,14 +42,59 @@ def dashboard(request):
     annee = today.year
     mois = today.month
 
+    # On récupère le paramètre (montant de la cotisation)
+    parametre, _ = Parametre.objects.get_or_create(id=1)
+    montant_standard = parametre.montant_cotisation_mensuelle
+
+    tous_les_membres = Membre.objects.all()
+    retards = []
+    
+    for membre in tous_les_membres:
+        statut = membre.statut_cotisation
+        
+        if statut != "À jour":
+            montant_du = 0
+            
+            # 1. Cotisations en attente
+            montant_du_existant = membre.cotisations.filter(statut='en_attente').aggregate(
+                total=Sum('montant')
+            )['total'] or 0
+            montant_du += montant_du_existant
+            
+            # 2. Mois de retard non enregistrés
+            derniere_cot = membre.cotisations.filter(
+                type_cotisation='mensuelle', statut='payee'
+            ).order_by('-annee', '-mois').first()
+            
+            if derniere_cot:
+                date_debut_calcul = date(derniere_cot.annee, derniere_cot.mois, 1) + relativedelta(months=1)
+            else:
+                date_debut_calcul = date(membre.date_adhesion.year, membre.date_adhesion.month, 1)
+            
+            date_fin = date(today.year, today.month, 1)
+            
+            if date_debut_calcul <= date_fin:
+                nb_mois = (date_fin.year - date_debut_calcul.year) * 12 + (date_fin.month - date_debut_calcul.month) + 1
+                
+                for i in range(nb_mois):
+                    mois_courant = date_debut_calcul + relativedelta(months=i)
+                    if not membre.cotisations.filter(type_cotisation='mensuelle', annee=mois_courant.year, mois=mois_courant.month).exists():
+                        montant_du += montant_standard
+
+            retards.append({
+                'membre': membre,
+                'montant_du': montant_du,
+                'statut': statut
+            })
+            
+    retards = sorted(retards, key=lambda x: x['montant_du'], reverse=True)
+
     stats = {
         'total_membres': Membre.objects.filter(statut='actif').count(),
         'cotisations_mois': Cotisation.objects.filter(
             type_cotisation='mensuelle', mois=mois, annee=annee, statut='payee'
         ).aggregate(total=Sum('montant'))['total'] or 0,
-        'retards': Cotisation.objects.filter(
-            statut='en_attente', date_echeance__lt=today
-        ).count(),
+        'retards': len(retards),
         'total_annee': Cotisation.objects.filter(
             annee=annee, statut='payee'
         ).aggregate(total=Sum('montant'))['total'] or 0,
@@ -57,14 +104,10 @@ def dashboard(request):
         statut='payee'
     ).select_related('membre').order_by('-date_paiement')[:10]
 
-    retards = Cotisation.objects.filter(
-        statut='en_attente', date_echeance__lt=today
-    ).select_related('membre')[:10]
-
     return render(request, 'cotisations/dashboard.html', {
         'stats': stats,
         'derniers_paiements': derniers_paiements,
-        'retards': retards,
+        'retards': retards[:10],
         'mois_actuel': mois,
         'annee_actuelle': annee,
     })
@@ -85,7 +128,7 @@ def liste_cotisations(request):
         'cotisations': cotisations,
         'type_filter': type_filter,
         'statut_filter': statut_filter,
-        'today': timezone.now().date(),  # <-- Ajouté pour le template
+        'today': timezone.now().date(),
     })
 
 
@@ -199,7 +242,6 @@ def supprimer_cotisation(request, pk):
     cotisation = get_object_or_404(Cotisation, pk=pk)
     
     if request.method == 'POST':
-        # --- VÉRIFICATION POUR LES COTISATIONS MENSUELLES ---
         if cotisation.type_cotisation == 'mensuelle':
             derniere_mensuelle = Cotisation.objects.filter(
                 membre=cotisation.membre, 
@@ -208,10 +250,8 @@ def supprimer_cotisation(request, pk):
             
             if derniere_mensuelle and derniere_mensuelle.pk != cotisation.pk:
                 messages.error(request, "Seule la dernière cotisation mensuelle peut être supprimée.")
-                # On réaffiche la page avec l'erreur au lieu de rediriger
                 return render(request, 'cotisations/confirmer_suppression.html', {'cotisation': cotisation})
                 
-        # --- VÉRIFICATION POUR LES COTISATIONS EXCEPTIONNELLES ---
         elif cotisation.type_cotisation == 'exceptionnelle':
             derniere_exceptionnelle = Cotisation.objects.filter(
                 membre=cotisation.membre, 
@@ -220,10 +260,8 @@ def supprimer_cotisation(request, pk):
             
             if derniere_exceptionnelle and derniere_exceptionnelle.pk != cotisation.pk:
                 messages.error(request, "Seule la dernière cotisation exceptionnelle peut être supprimée.")
-                # On réaffiche la page avec l'erreur au lieu de rediriger
                 return render(request, 'cotisations/confirmer_suppression.html', {'cotisation': cotisation})
 
-        # Si les règles sont respectées, on supprime
         cotisation.delete()
         messages.success(request, "Cotisation supprimée avec succès.")
         return redirect('liste_cotisations')
@@ -233,7 +271,6 @@ def supprimer_cotisation(request, pk):
     })
 
 
-# --- NOUVELLE VUE POUR LA COTISATION EXCEPTIONNELLE ---
 @login_required
 def creer_cotisation_exceptionnelle(request):
     if request.method == 'POST':
@@ -244,7 +281,6 @@ def creer_cotisation_exceptionnelle(request):
             libelle = form.cleaned_data['libelle']
             montant = form.cleaned_data['montant']
             
-            # On utilise la date du jour comme échéance
             date_echeance = timezone.now().date()
             
             membres_actifs = Membre.objects.filter(statut='actif')
@@ -266,7 +302,7 @@ def creer_cotisation_exceptionnelle(request):
                         membre=membre,
                         type_cotisation='exceptionnelle',
                         montant=montant,
-                        date_echeance=date_echeance, # <-- Échéance = aujourd'hui
+                        date_echeance=date_echeance,
                         libelle=libelle,
                         statut='en_attente'
                     )
@@ -278,3 +314,20 @@ def creer_cotisation_exceptionnelle(request):
         form = CotisationExceptionnelleForm()
     
     return render(request, 'cotisations/form_exceptionnelle.html', {'form': form})
+
+
+@login_required
+def parametres(request):
+    # On récupère l'unique paramètre (id=1) ou on le crée s'il n'existe pas
+    parametre, created = Parametre.objects.get_or_create(id=1)
+    
+    if request.method == 'POST':
+        form = ParametreForm(request.POST, instance=parametre)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Paramètres enregistrés avec succès.")
+            return redirect('parametres')
+    else:
+        form = ParametreForm(instance=parametre)
+        
+    return render(request, 'cotisations/parametres.html', {'form': form})

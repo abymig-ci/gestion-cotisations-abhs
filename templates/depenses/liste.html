@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Dépenses{% endblock %}
+{% block page_title %}Gestion des Dépenses{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card-custom kpi-card bg-danger bg-opacity-10 border-danger">
+            <div class="kpi-icon red"><i class="bi bi-cart-dash"></i></div>
+            <div class="kpi-info">
+                <h3>{{ total_depenses|floatformat:0 }} FCFA</h3>
+                <p>Total des dépenses</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card-custom kpi-card bg-success bg-opacity-10 border-success">
+            <div class="kpi-icon green"><i class="bi bi-wallet2"></i></div>
+            <div class="kpi-info">
+                <h3>{{ solde|floatformat:0 }} FCFA</h3>
+                <p>Solde en caisse</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <p class="text-muted mb-0">Historique des sorties de fonds.</p>
+    <a href="{% url 'ajouter_depense' %}" class="btn-primary-custom">
+        <i class="bi bi-plus-lg"></i> Nouvelle Dépense
+    </a>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Libellé</th>
+                    <th>Catégorie</th>
+                    <th>Bénéficiaire</th>
+                    <th>Montant</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in depenses %}
+                <tr>
+                    <td class="text-muted">{{ d.date_depense|date:"d/m/Y" }}</td>
+                    <td class="fw-bold">{{ d.libelle }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ d.get_categorie_display }}</span></td>
+                    <td>{{ d.membre|default:"—" }}</td>
+                    <td class="fw-bold text-danger">- {{ d.montant|floatformat:0 }} FCFA</td>
+                    <td class="text-end text-nowrap">
+                        <a href="{% url 'modifier_depense' d.pk %}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle" title="Modifier"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'supprimer_depense' d.pk %}" class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Supprimer"><i class="bi bi-trash"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-5">Aucune dépense enregistrée.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
