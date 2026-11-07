@@ -3,16 +3,18 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import Coalesce
-from django.utils import timezone  # <-- L'import manquant est ajouté ici
+from django.utils import timezone
 from decimal import Decimal
 
 from .models import Membre, Groupe, Poste, Reunion
 from .forms import MembreForm, GroupeForm, PosteForm, ReunionForm
 
+
 @login_required
 def liste_membres(request):
     groupe_id = request.GET.get('groupe')
     poste_id = request.GET.get('poste')
+    statut_filter = request.GET.get('statut')  # Récupère 'non_a_jour' ou 'a_jour'
     
     membres = Membre.objects.annotate(
         nb_cotisations=Count('cotisations'),
@@ -23,8 +25,19 @@ def liste_membres(request):
         membres = membres.filter(groupe_id=groupe_id)
     if poste_id:
         membres = membres.filter(poste_id=poste_id)
+    
+    # Filtrage selon le statut
+    if statut_filter == 'non_a_jour':
+        # On ne garde que ceux qui sont VRAIMENT en retard
+        membres = [m for m in membres if m.statut_cotisation == "En retard"]
+    elif statut_filter == 'a_jour':
+        # On garde TOUS ceux qui ne sont pas en retard (À jour, En carence, Inactif, Suspendu)
+        membres = [m for m in membres if m.statut_cotisation != "En retard"]
         
-    return render(request, 'membres/liste.html', {'membres': membres})
+    return render(request, 'membres/liste.html', {
+        'membres': membres,
+        'statut_filter': statut_filter,
+    })
 
 
 @login_required
@@ -68,7 +81,7 @@ def detail_membre(request, pk):
         'membre': membre,
         'cotisations': cotisations,
         'total': total,
-        'today': timezone.now().date(),  # <-- AJOUTER CETTE LIGNE
+        'today': timezone.now().date(),
     })
 
 
@@ -90,6 +103,7 @@ def ajouter_groupe(request):
         form = GroupeForm()
     return render(request, 'membres/form_groupe.html', {'form': form, 'titre': 'Nouveau Groupe'})
 
+
 @login_required
 def modifier_groupe(request, pk):
     groupe = get_object_or_404(Groupe, pk=pk)
@@ -103,19 +117,17 @@ def modifier_groupe(request, pk):
         form = GroupeForm(instance=groupe)
     return render(request, 'membres/form_groupe.html', {'form': form, 'titre': 'Modifier le Groupe'})
 
+
 @login_required
 def supprimer_groupe(request, pk):
     groupe = get_object_or_404(Groupe, pk=pk)
     if request.method == 'POST':
-        # On détache d'abord tous les membres de ce groupe
-        # Cela évite les erreurs de contrainte de clé étrangère
         groupe.membres.update(groupe=None)
-        
-        # Ensuite, on supprime le groupe
         groupe.delete()
         messages.success(request, "Groupe supprimé. Les membres concernés sont désormais sans groupe.")
         return redirect('liste_groupes')
     return render(request, 'membres/confirmer_suppression_groupe.html', {'groupe': groupe})
+
 
 @login_required
 def liste_postes(request):
@@ -135,14 +147,6 @@ def ajouter_poste(request):
         form = PosteForm()
     return render(request, 'membres/form_poste.html', {'form': form, 'titre': 'Nouveau Poste'})
 
-@login_required
-def supprimer_membre(request, pk):
-    membre = get_object_or_404(Membre, pk=pk)
-    if request.method == 'POST':
-        membre.delete()
-        messages.success(request, "Le membre a été supprimé avec succès.")
-        return redirect('liste_membres')
-    return render(request, 'membres/confirmer_suppression.html', {'membre': membre})
 
 @login_required
 def modifier_poste(request, pk):
@@ -157,10 +161,22 @@ def modifier_poste(request, pk):
         form = PosteForm(instance=poste)
     return render(request, 'membres/form_poste.html', {'form': form, 'titre': 'Modifier le Poste'})
 
+
+@login_required
+def supprimer_membre(request, pk):
+    membre = get_object_or_404(Membre, pk=pk)
+    if request.method == 'POST':
+        membre.delete()
+        messages.success(request, "Le membre a été supprimé avec succès.")
+        return redirect('liste_membres')
+    return render(request, 'membres/confirmer_suppression.html', {'membre': membre})
+
+
 @login_required
 def liste_reunions(request):
     reunions = Reunion.objects.select_related('groupe').all()
     return render(request, 'membres/liste_reunions.html', {'reunions': reunions})
+
 
 @login_required
 def ajouter_reunion(request):
@@ -174,6 +190,7 @@ def ajouter_reunion(request):
         form = ReunionForm()
     return render(request, 'membres/form_reunion.html', {'form': form, 'titre': 'Programmer une réunion'})
 
+
 @login_required
 def modifier_reunion(request, pk):
     reunion = get_object_or_404(Reunion, pk=pk)
@@ -186,6 +203,7 @@ def modifier_reunion(request, pk):
     else:
         form = ReunionForm(instance=reunion)
     return render(request, 'membres/form_reunion.html', {'form': form, 'titre': 'Modifier la réunion'})
+
 
 @login_required
 def supprimer_reunion(request, pk):

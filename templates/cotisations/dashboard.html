@@ -4,12 +4,17 @@
 
 {% block content %}
 <div class="row g-4 mb-4">
-    <!-- Carte 1 : Membres actifs -->
+    <!-- Carte 1 : Membres actifs avec bouton À jour -->
     <div class="col-md-6 col-lg-3">
         <div class="card-custom kpi-card h-100">
             <div class="kpi-icon blue"><i class="bi bi-people"></i></div>
-            <div class="kpi-info">
-                <h3>{{ stats.total_membres }}</h3>
+            <div class="kpi-info w-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3>{{ stats.total_membres }}</h3>
+                    <a href="{% url 'liste_membres' %}?statut=a_jour" class="btn btn-sm btn-outline-primary py-1 px-2" style="font-size: 0.7rem;">
+                        À jour <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
                 <p>Membres actifs</p>
             </div>
         </div>
@@ -92,11 +97,14 @@
         </div>
     </div>
 
-    <!-- Tableau Retards (Tous les membres non à jour) -->
+    <!-- Tableau Retards (Uniquement les vrais retards) -->
     <div class="col-lg-6">
         <div class="card-custom h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-circle text-danger"></i> Membres non à jour</h5>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-circle text-danger"></i> Membres en retard</h5>
+                <a href="{% url 'liste_membres' %}?statut=non_a_jour" class="btn btn-sm btn-outline-danger py-1 px-2" style="font-size: 0.7rem;">
+                    Voir tout <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
             <div class="table-responsive">
                 <table class="table-custom">
@@ -118,12 +126,6 @@
                             <td>
                                 {% if item.statut == 'En retard' %}
                                     <span class="badge-custom badge-danger">En retard</span>
-                                {% elif item.statut == 'En carence' %}
-                                    <span class="badge-custom badge-warning">En carence</span>
-                                {% elif item.statut == 'Inactif' %}
-                                    <span class="badge-custom bg-secondary text-white">Inactif</span>
-                                {% elif item.statut == 'Suspendu' %}
-                                    <span class="badge-custom bg-dark text-white">Suspendu</span>
                                 {% else %}
                                     <span class="badge-custom bg-secondary text-white">{{ item.statut }}</span>
                                 {% endif %}
@@ -131,7 +133,7 @@
                             <td class="text-end fw-bold text-danger">{{ item.montant_du|floatformat:0 }} FCFA</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="3" class="text-center text-muted py-3">Tous les membres sont à jour. 🎉</td></tr>
+                        <tr><td colspan="3" class="text-center text-muted py-3">Aucun membre en retard. 🎉</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

@@ -4,6 +4,22 @@
 
 {% block content %}
 
+<!-- BANDEAU POUR LE FILTRE "NON À JOUR" -->
+{% if statut_filter == 'non_a_jour' %}
+<div class="alert alert-danger shadow-sm border-0 mb-4">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> Vous consultez uniquement les membres qui ne sont pas à jour de leurs cotisations.
+    <a href="{% url 'liste_membres' %}" class="btn btn-sm btn-outline-danger float-end">Voir tous les membres</a>
+</div>
+{% endif %}
+
+<!-- BANDEAU POUR LE FILTRE "À JOUR" -->
+{% if statut_filter == 'a_jour' %}
+<div class="alert alert-success shadow-sm border-0 mb-4">
+    <i class="bi bi-check-circle-fill me-2"></i> Vous consultez les membres qui ne sont pas en retard de cotisations (y compris ceux en carence, inactifs ou suspendus).
+    <a href="{% url 'liste_membres' %}" class="btn btn-sm btn-outline-success float-end">Voir tous les membres</a>
+</div>
+{% endif %}
+
 {% if groupe_actuel %}
 <div class="alert alert-info shadow-sm border-0 mb-4" style="background-color: #e0e7ff; color: #0a1c5c;">
     <i class="bi bi-funnel-fill me-2"></i> Vous consultez actuellement les membres du groupe : <strong>{{ groupe_actuel.nom }}</strong>
@@ -77,7 +93,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="6" class="text-center text-muted py-5">Aucun membre enregistré.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted py-5">Aucun membre trouvé.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

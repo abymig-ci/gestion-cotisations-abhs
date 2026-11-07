@@ -52,7 +52,7 @@ def dashboard(request):
     for membre in tous_les_membres:
         statut = membre.statut_cotisation
         
-        if statut != "À jour":
+        if statut == "En retard":
             montant_du = 0
             
             # 1. Cotisations en attente
