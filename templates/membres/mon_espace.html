@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Mon Espace{% endblock %}
+{% block page_title %}Mon Espace Membre{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card-custom text-center p-5 h-100">
+            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3 shadow" style="width: 100px; height: 100px; font-size: 2.5rem;">
+                {{ membre.prenom|first|upper }}{{ membre.nom|first|upper }}
+            </div>
+            <h4 class="fw-bold mb-1">{{ membre.nom|upper }}</h4>
+            <p class="text-muted mb-3">{{ membre.prenom }}</p>
+            
+            <div class="mb-4">
+                {% if membre.statut_cotisation == 'À jour' %}
+                    <span class="badge bg-success px-4 py-2 rounded-pill fs-6">Cotisations à jour</span>
+                {% else %}
+                    <span class="badge bg-danger px-4 py-2 rounded-pill fs-6">{{ membre.statut_cotisation }}</span>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center bg-success bg-opacity-10 text-success rounded-3 p-3 mb-4">
+                <span class="fw-bold small text-uppercase">Mon total payé</span>
+                <span class="fw-bold fs-5">{{ total|floatformat:0 }} FCFA</span>
+            </div>
+
+            <!-- BOUTONS POUR CONSULTER LES LISTES DE MEMBRES -->
+            <div class="d-grid gap-2 border-top pt-3">
+                <a href="{% url 'membres_a_jour' %}" class="btn btn-outline-success">
+                    <i class="bi bi-check-circle-fill me-1"></i> Liste des membres à jour
+                </a>
+                <a href="{% url 'membres_en_retard' %}" class="btn btn-outline-danger">
+                    <i class="bi bi-exclamation-circle-fill me-1"></i> Liste des membres en retard
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card-custom h-100">
+            <h5 class="fw-bold mb-4">Mon historique</h5>
+            <div class="table-responsive">
+                <table class="table-custom">
+                    <thead>
+                        <tr><th>Type</th><th>Détail</th><th>Montant</th><th>Statut</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in cotisations %}
+                        <tr>
+                            <td>
+                                {% if c.type_cotisation == 'exceptionnelle' %}
+                                    <span class="badge bg-danger mb-1">Exceptionnelle</span>
+                                {% elif c.type_cotisation == 'adhesion' %}
+                                    <span class="badge bg-primary mb-1">Droit d'adhésion</span>
+                                {% else %}
+                                    Mensuelle
+                                {% endif %}
+                            </td>
+                            <td>{% if c.type_cotisation == 'mensuelle' %}{{ c.get_mois_display }} {{ c.annee }}{% elif c.type_cotisation == 'adhesion' %}Frais d'inscription{% else %}{{ c.libelle }}{% endif %}</td>
+                            <td>{{ c.montant|floatformat:0 }} FCFA</td>
+                            <td>
+                                {% if c.statut == 'payee' %}<span class="badge bg-success">Payée</span>
+                                {% elif c.date_echeance < today %}<span class="badge bg-danger">En retard</span>
+                                {% else %}<span class="badge bg-warning text-dark">En attente</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center">Aucune cotisation.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

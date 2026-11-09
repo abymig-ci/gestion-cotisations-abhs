@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from datetime import date
+from django.contrib.auth.models import User
 
 
 class Poste(models.Model):
@@ -58,6 +59,20 @@ class Membre(models.Model):
         ('inactif', 'Inactif'),
         ('suspendu', 'Suspendu'),
     ]
+    
+    # Lien vers le compte utilisateur
+    utilisateur = models.OneToOneField(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='membre_profil',
+        verbose_name="Compte utilisateur lié"
+    )
+    
+    # Champs pour l'invitation
+    invitation_token = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    invitation_date = models.DateTimeField(blank=True, null=True)
     
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
@@ -119,13 +134,11 @@ class Membre(models.Model):
         if self.cotisations.filter(type_cotisation='exceptionnelle', statut='en_attente').exists():
             return "En retard"
 
-        # 3. Cotisations mensuelles par rapport à la dernière réunion passée (TOUS GROUPES CONFONDUS)
-        # On cherche la réunion la plus récente qui a DÉJÀ eu lieu
+        # 3. Cotisations mensuelles par rapport à la dernière réunion passée
         derniere_reunion = Reunion.objects.filter(date_reunion__lte=timezone.now()).order_by('-date_reunion').first()
         
         if derniere_reunion:
             date_reunion = derniere_reunion.date_reunion.date()
-            # La date limite est 3 mois avant la réunion
             date_limite = date_reunion - relativedelta(months=4)
             
             derniere_cot = self.cotisations.filter(
@@ -135,15 +148,11 @@ class Membre(models.Model):
 
             if derniere_cot:
                 date_paiement = date(derniere_cot.annee, derniere_cot.mois, 1)
-                # Si le dernier paiement est antérieur à la date limite, il est en retard
                 if date_paiement < date_limite:
                     return "En retard"
             else:
-                # Aucune mensuelle payée et plus en carence
                 return "En retard"
         else:
-            # S'il n'y a eu AUCUNE réunion dans l'association pour le moment
-            # On vérifie qu'il a payé au moins une fois ce mois-ci ou le mois dernier
             derniere_cot = self.cotisations.filter(type_cotisation='mensuelle', statut='payee').order_by('-annee', '-mois').first()
             if derniere_cot:
                 mois_paiement_absolu = derniere_cot.annee * 12 + derniere_cot.mois
@@ -154,4 +163,3 @@ class Membre(models.Model):
                 return "En retard"
 
         return "À jour"
-# Version finale du 04/11/2026

@@ -242,3 +242,13 @@ body {
     .sidebar.show { transform: translateX(0); }
     .main-content { margin-left: 0; }
 }
+
+/* Bordures plus foncées pour les champs de connexion */
+.form-control {
+    border: 2px solid #cbd5e1 !important; /* Bordure grise foncée */
+}
+
+.form-control:focus {
+    border-color: var(--primary) !important; /* Devient bleu marine au clic */
+    box-shadow: 0 0 0 0.25rem rgba(10, 28, 92, 0.25) !important; /* Halo bleu au clic */
+}

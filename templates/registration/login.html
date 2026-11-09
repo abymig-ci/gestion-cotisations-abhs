@@ -14,6 +14,20 @@
             align-items: center;
             justify-content: center;
             margin: 0;
+            min-height: 100vh;
+        }
+        
+        /* Bordures plus foncées pour les champs de connexion */
+        .custom-input {
+            border: 2px solid #94a3b8 !important;
+            background-color: #f8fafc !important;
+            transition: all 0.3s ease;
+        }
+        
+        .custom-input:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 0.25rem rgba(10, 28, 92, 0.15) !important;
+            background-color: #ffffff !important;
         }
     </style>
 </head>
@@ -35,14 +49,33 @@
             {% csrf_token %}
             <div class="mb-3">
                 <label class="form-label small fw-bold text-muted">Nom d'utilisateur</label>
-                <input type="text" name="username" class="form-control form-control-lg bg-light border-0" required>
+                <input type="text" name="username" class="form-control form-control-lg custom-input" required autofocus>
             </div>
             <div class="mb-4">
                 <label class="form-label small fw-bold text-muted">Mot de passe</label>
-                <input type="password" name="password" class="form-control form-control-lg bg-light border-0" required>
+                <input type="password" name="password" class="form-control form-control-lg custom-input" required>
             </div>
-            <button type="submit" class="btn-primary-custom w-100 py-3 justify-content-center fs-6">Se connecter</button>
+            <button type="submit" class="btn-primary-custom w-100 py-3 justify-content-center fs-6">
+                <i class="bi bi-box-arrow-in-right"></i> Se connecter
+            </button>
         </form>
     </div>
+
+    <!-- Script pour s'assurer que la touche Entrée soumet le formulaire -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const inputs = form.querySelectorAll('input');
+            
+            inputs.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault(); // Empêche le comportement par défaut
+                        form.submit(); // Soumet le formulaire
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

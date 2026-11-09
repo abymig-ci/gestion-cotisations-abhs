@@ -18,16 +18,22 @@
             <h5>ASSOCIATION DES<br>BIOLOGISTES</h5>
         </div>
         <ul class="sidebar-menu">
-            <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-grid-1x2-fill"></i> Tableau de bord</a></li>
-            <li><a href="{% url 'liste_cotisations' %}" class="{% if 'cotisation' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Cotisations</a></li>
-            <li><a href="{% url 'liste_depenses' %}" class="{% if 'depense' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cart-dash-fill"></i> Dépenses</a></li>
-            <li><a href="{% url 'liste_membres' %}" class="{% if 'membre' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people-fill"></i> Membres</a></li>
-            <li><a href="{% url 'liste_reunions' %}" class="{% if 'reunion' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-calendar-event-fill"></i> Réunions</a></li>
-            <li><a href="{% url 'liste_groupes' %}" class="{% if 'groupe' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-diagram-3-fill"></i> Groupes</a></li>
-            <li><a href="{% url 'liste_postes' %}" class="{% if 'poste' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-person-badge-fill"></i> Postes</a></li>
-            <li><a href="{% url 'parametres' %}" class="{% if 'parametre' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-gear-fill"></i> Paramètres</a></li>
             {% if user.is_superuser %}
-            <li><a href="/admin/"><i class="bi bi-shield-lock-fill"></i> Administration</a></li>
+                <!-- MENU ADMINISTRATEUR -->
+                <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-grid-1x2-fill"></i> Tableau de bord</a></li>
+                <li><a href="{% url 'liste_cotisations' %}" class="{% if 'cotisation' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Cotisations</a></li>
+                <li><a href="{% url 'liste_depenses' %}" class="{% if 'depense' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cart-dash-fill"></i> Dépenses</a></li>
+                <li><a href="{% url 'liste_membres' %}" class="{% if 'membre' in request.resolver_match.url_name and 'mon_espace' not in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people-fill"></i> Membres</a></li>
+                <li><a href="{% url 'liste_reunions' %}" class="{% if 'reunion' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-calendar-event-fill"></i> Réunions</a></li>
+                <li><a href="{% url 'liste_groupes' %}" class="{% if 'groupe' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-diagram-3-fill"></i> Groupes</a></li>
+                <li><a href="{% url 'liste_postes' %}" class="{% if 'poste' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-person-badge-fill"></i> Postes</a></li>
+                <li><a href="{% url 'parametres' %}" class="{% if 'parametre' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-gear-fill"></i> Paramètres</a></li>
+                <li><a href="/admin/"><i class="bi bi-shield-lock-fill"></i> Administration</a></li>
+            {% else %}
+                <!-- MENU MEMBRE -->
+                <li><a href="{% url 'mon_espace' %}" class="{% if 'mon_espace' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-house-door-fill"></i> Mon Espace</a></li>
+                <li><a href="{% url 'membres_a_jour' %}" class="{% if 'membres_a_jour' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-check-circle-fill"></i> Membres à jour</a></li>
+                <li><a href="{% url 'membres_en_retard' %}" class="{% if 'membres_en_retard' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-exclamation-circle-fill"></i> Membres en retard</a></li>
             {% endif %}
         </ul>
         <div class="sidebar-footer">
@@ -59,7 +65,6 @@
         {% if messages %}
             <div class="position-relative">
                 {% for message in messages %}
-                    <!-- AJOUT DE text-white fw-bold -->
                     <div class="alert alert-{{ message.tags }} alert-custom shadow-sm text-white fw-bold" style="transition: opacity 0.3s;">
                         {{ message }}
                     </div>
