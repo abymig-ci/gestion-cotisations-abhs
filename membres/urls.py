@@ -8,6 +8,8 @@ urlpatterns = [
     path('<int:pk>/', views.detail_membre, name='detail_membre'),
     path('<int:pk>/modifier/', views.modifier_membre, name='modifier_membre'),
     path('<int:pk>/supprimer/', views.supprimer_membre, name='supprimer_membre'),
+    path('acces/', views.gerer_acces_utilisateurs, name='gerer_acces_utilisateurs'),
+    path('acces/<int:user_id>/', views.modifier_acces_utilisateur, name='modifier_acces_utilisateur'),
     
     # URL pour le lien d'invitation (doit être AVANT les autres pour éviter les conflits)
     path('invitation/<str:token>/', views.definir_mot_de_passe, name='definir_mot_de_passe'),

@@ -28,12 +28,51 @@
                 <li><a href="{% url 'liste_groupes' %}" class="{% if 'groupe' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-diagram-3-fill"></i> Groupes</a></li>
                 <li><a href="{% url 'liste_postes' %}" class="{% if 'poste' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-person-badge-fill"></i> Postes</a></li>
                 <li><a href="{% url 'parametres' %}" class="{% if 'parametre' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-gear-fill"></i> Paramètres</a></li>
-                <li><a href="/admin/"><i class="bi bi-shield-lock-fill"></i> Administration</a></li>
+                <li><a href="{% url 'gerer_acces_utilisateurs' %}" class="{% if 'acces' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-shield-lock-fill"></i> Gérer les accès</a></li>
+                <li><a href="/admin/"><i class="bi bi-tools"></i> Administration Django</a></li>
             {% else %}
-                <!-- MENU MEMBRE -->
+                <!-- MENU POUR TOUS LES MEMBRES -->
                 <li><a href="{% url 'mon_espace' %}" class="{% if 'mon_espace' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-house-door-fill"></i> Mon Espace</a></li>
                 <li><a href="{% url 'membres_a_jour' %}" class="{% if 'membres_a_jour' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-check-circle-fill"></i> Membres à jour</a></li>
                 <li><a href="{% url 'membres_en_retard' %}" class="{% if 'membres_en_retard' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-exclamation-circle-fill"></i> Membres en retard</a></li>
+                <li><a href="{% url 'liste_depenses_publique' %}" class="{% if 'liste_depenses_publique' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cart-dash-fill"></i> Dépenses (Publique)</a></li>
+
+                <!-- MENUS SPÉCIFIQUES SELON LES ACCÈS -->
+                {% if user.profil_acces %}
+                    {% if user.profil_acces.acces_cotisations %}
+                        <li class="mt-3 text-muted small text-uppercase px-3">Trésorerie</li>
+                        <li><a href="{% url 'liste_cotisations' %}" class="{% if 'cotisation' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Gérer les cotisations</a></li>
+                    {% endif %}
+                    
+                    {% if user.profil_acces.acces_depenses %}
+                        <li><a href="{% url 'liste_depenses' %}" class="{% if 'liste_depenses' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cart-dash-fill"></i> Gérer les dépenses</a></li>
+                    {% endif %}
+
+                    {% if user.profil_acces.acces_membres %}
+                        <li class="mt-3 text-muted small text-uppercase px-3">Secrétariat</li>
+                        <li><a href="{% url 'liste_membres' %}" class="{% if 'liste_membres' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people-fill"></i> Gérer les membres</a></li>
+                    {% endif %}
+
+                    {% if user.profil_acces.acces_reunions %}
+                        {% if not user.profil_acces.acces_membres %}<li class="mt-3 text-muted small text-uppercase px-3">Réunions</li>{% endif %}
+                        <li><a href="{% url 'liste_reunions' %}" class="{% if 'reunion' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-calendar-event-fill"></i> Gérer les réunions</a></li>
+                    {% endif %}
+
+                    {% if user.profil_acces.acces_groupes %}
+                        <li class="mt-3 text-muted small text-uppercase px-3">Structure</li>
+                        <li><a href="{% url 'liste_groupes' %}" class="{% if 'groupe' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-diagram-3-fill"></i> Gérer les groupes</a></li>
+                    {% endif %}
+
+                    {% if user.profil_acces.acces_postes %}
+                        {% if not user.profil_acces.acces_groupes %}<li class="mt-3 text-muted small text-uppercase px-3">Structure</li>{% endif %}
+                        <li><a href="{% url 'liste_postes' %}" class="{% if 'poste' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-person-badge-fill"></i> Gérer les postes</a></li>
+                    {% endif %}
+
+                    {% if user.profil_acces.acces_parametres %}
+                        <li class="mt-3 text-muted small text-uppercase px-3">Système</li>
+                        <li><a href="{% url 'parametres' %}" class="{% if 'parametre' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-gear-fill"></i> Paramètres</a></li>
+                    {% endif %}
+                {% endif %}
             {% endif %}
         </ul>
         <div class="sidebar-footer">

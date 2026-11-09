@@ -25,13 +25,17 @@
                 <span class="fw-bold fs-5">{{ total|floatformat:0 }} FCFA</span>
             </div>
 
-            <!-- BOUTONS POUR CONSULTER LES LISTES DE MEMBRES -->
+            <!-- BOUTONS DE NAVIGATION MEMBRE -->
             <div class="d-grid gap-2 border-top pt-3">
                 <a href="{% url 'membres_a_jour' %}" class="btn btn-outline-success">
                     <i class="bi bi-check-circle-fill me-1"></i> Liste des membres à jour
                 </a>
                 <a href="{% url 'membres_en_retard' %}" class="btn btn-outline-danger">
                     <i class="bi bi-exclamation-circle-fill me-1"></i> Liste des membres en retard
+                </a>
+                <!-- NOUVEAU BOUTON DÉPENSES -->
+                <a href="{% url 'liste_depenses_publique' %}" class="btn btn-outline-warning">
+                    <i class="bi bi-cart-dash-fill me-1"></i> Voir les dépenses de l'association
                 </a>
             </div>
         </div>

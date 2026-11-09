@@ -163,3 +163,27 @@ class Membre(models.Model):
                 return "En retard"
 
         return "À jour"
+
+class ProfilAcces(models.Model):
+    utilisateur = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='profil_acces',
+        verbose_name="Utilisateur"
+    )
+    
+    # Les cases à cocher
+    acces_membres = models.BooleanField(default=False, verbose_name="Accès à la gestion des membres")
+    acces_cotisations = models.BooleanField(default=False, verbose_name="Accès à la gestion des cotisations")
+    acces_depenses = models.BooleanField(default=False, verbose_name="Accès à la gestion des dépenses")
+    acces_reunions = models.BooleanField(default=False, verbose_name="Accès à la gestion des réunions")
+    acces_groupes = models.BooleanField(default=False, verbose_name="Accès à la gestion des groupes")
+    acces_postes = models.BooleanField(default=False, verbose_name="Accès à la gestion des postes")
+    acces_parametres = models.BooleanField(default=False, verbose_name="Accès aux paramètres")
+
+    class Meta:
+        verbose_name = "Profil d'accès"
+        verbose_name_plural = "Profils d'accès"
+
+    def __str__(self):
+        return f"Accès de {self.utilisateur.username}"

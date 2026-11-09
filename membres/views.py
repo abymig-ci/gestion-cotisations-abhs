@@ -8,15 +8,14 @@ from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
-from django.urls import reverse
 import random
 import string
 
-from .models import Membre, Groupe, Poste, Reunion
+from .models import Membre, Groupe, Poste, Reunion, ProfilAcces
 from .forms import MembreForm, GroupeForm, PosteForm, ReunionForm
 
 
-# --- DÉCORATEUR DE SÉCURITÉ ---
+# --- DÉCORATEURS DE SÉCURITÉ ---
 def admin_required(view_func):
     @login_required
     def _wrapped_view(request, *args, **kwargs):
@@ -26,15 +25,37 @@ def admin_required(view_func):
     return _wrapped_view
 
 
-# --- VUES D'ADMINISTRATION (Protégées) ---
+def has_acces(user, acces_name):
+    """Vérifie si l'utilisateur a un accès spécifique, ou s'il est admin."""
+    if user.is_superuser:
+        return True
+    try:
+        profil = user.profil_acces
+        return getattr(profil, acces_name, False)
+    except ProfilAcces.DoesNotExist:
+        return False
 
-@admin_required
+
+def check_acces(acces_name):
+    """Décorateur pour vérifier un accès spécifique."""
+    def decorator(view_func):
+        @login_required
+        def _wrapped_view(request, *args, **kwargs):
+            if not has_acces(request.user, acces_name):
+                raise PermissionDenied
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
+
+
+# --- VUES D'ADMINISTRATION DES MEMBRES ---
+
+@check_acces('acces_membres')
 def liste_membres(request):
     groupe_id = request.GET.get('groupe')
     poste_id = request.GET.get('poste')
     statut_filter = request.GET.get('statut')
     
-    # OPTIMISATION : select_related pour éviter le problème N+1
     membres = Membre.objects.select_related('poste', 'groupe').annotate(
         nb_cotisations=Count('cotisations'),
         total_paye=Sum('cotisations__montant', filter=Q(cotisations__statut='payee'))
@@ -56,7 +77,7 @@ def liste_membres(request):
     })
 
 
-@admin_required
+@check_acces('acces_membres')
 def ajouter_membre(request):
     if request.method == 'POST':
         form = MembreForm(request.POST)
@@ -69,7 +90,7 @@ def ajouter_membre(request):
     return render(request, 'membres/form.html', {'form': form, 'titre': 'Nouveau membre'})
 
 
-@admin_required
+@check_acces('acces_membres')
 def modifier_membre(request, pk):
     membre = get_object_or_404(Membre, pk=pk)
     if request.method == 'POST':
@@ -85,10 +106,8 @@ def modifier_membre(request, pk):
 
 @login_required
 def detail_membre(request, pk):
-    # OPTIMISATION : select_related pour charger le poste et le groupe en une fois
     membre = get_object_or_404(Membre.objects.select_related('poste', 'groupe'), pk=pk)
     
-    # Sécurité : un membre ne peut voir que son propre profil
     if not request.user.is_superuser:
         if not hasattr(request.user, 'membre_profil') or request.user.membre_profil.pk != membre.pk:
             raise PermissionDenied
@@ -108,13 +127,25 @@ def detail_membre(request, pk):
     })
 
 
-@admin_required
+@check_acces('acces_membres')
+def supprimer_membre(request, pk):
+    membre = get_object_or_404(Membre, pk=pk)
+    if request.method == 'POST':
+        membre.delete()
+        messages.success(request, "Le membre a été supprimé avec succès.")
+        return redirect('liste_membres')
+    return render(request, 'membres/confirmer_suppression.html', {'membre': membre})
+
+
+# --- VUES DES GROUPES ---
+
+@check_acces('acces_groupes')
 def liste_groupes(request):
     groupes = Groupe.objects.annotate(nb_membres=Count('membres'))
     return render(request, 'membres/liste_groupes.html', {'groupes': groupes})
 
 
-@admin_required
+@check_acces('acces_groupes')
 def ajouter_groupe(request):
     if request.method == 'POST':
         form = GroupeForm(request.POST)
@@ -127,7 +158,7 @@ def ajouter_groupe(request):
     return render(request, 'membres/form_groupe.html', {'form': form, 'titre': 'Nouveau Groupe'})
 
 
-@admin_required
+@check_acces('acces_groupes')
 def modifier_groupe(request, pk):
     groupe = get_object_or_404(Groupe, pk=pk)
     if request.method == 'POST':
@@ -141,7 +172,7 @@ def modifier_groupe(request, pk):
     return render(request, 'membres/form_groupe.html', {'form': form, 'titre': 'Modifier le Groupe'})
 
 
-@admin_required
+@check_acces('acces_groupes')
 def supprimer_groupe(request, pk):
     groupe = get_object_or_404(Groupe, pk=pk)
     if request.method == 'POST':
@@ -152,13 +183,15 @@ def supprimer_groupe(request, pk):
     return render(request, 'membres/confirmer_suppression_groupe.html', {'groupe': groupe})
 
 
-@admin_required
+# --- VUES DES POSTES ---
+
+@check_acces('acces_postes')
 def liste_postes(request):
     postes = Poste.objects.annotate(nb_membres=Count('membres'))
     return render(request, 'membres/liste_postes.html', {'postes': postes})
 
 
-@admin_required
+@check_acces('acces_postes')
 def ajouter_poste(request):
     if request.method == 'POST':
         form = PosteForm(request.POST)
@@ -171,7 +204,7 @@ def ajouter_poste(request):
     return render(request, 'membres/form_poste.html', {'form': form, 'titre': 'Nouveau Poste'})
 
 
-@admin_required
+@check_acces('acces_postes')
 def modifier_poste(request, pk):
     poste = get_object_or_404(Poste, pk=pk)
     if request.method == 'POST':
@@ -185,24 +218,15 @@ def modifier_poste(request, pk):
     return render(request, 'membres/form_poste.html', {'form': form, 'titre': 'Modifier le Poste'})
 
 
-@admin_required
-def supprimer_membre(request, pk):
-    membre = get_object_or_404(Membre, pk=pk)
-    if request.method == 'POST':
-        membre.delete()
-        messages.success(request, "Le membre a été supprimé avec succès.")
-        return redirect('liste_membres')
-    return render(request, 'membres/confirmer_suppression.html', {'membre': membre})
+# --- VUES DES RÉUNIONS ---
 
-
-@admin_required
+@check_acces('acces_reunions')
 def liste_reunions(request):
-    # OPTIMISATION : select_related pour le groupe
     reunions = Reunion.objects.select_related('groupe').all()
     return render(request, 'membres/liste_reunions.html', {'reunions': reunions})
 
 
-@admin_required
+@check_acces('acces_reunions')
 def ajouter_reunion(request):
     if request.method == 'POST':
         form = ReunionForm(request.POST)
@@ -215,7 +239,7 @@ def ajouter_reunion(request):
     return render(request, 'membres/form_reunion.html', {'form': form, 'titre': 'Programmer une réunion'})
 
 
-@admin_required
+@check_acces('acces_reunions')
 def modifier_reunion(request, pk):
     reunion = get_object_or_404(Reunion, pk=pk)
     if request.method == 'POST':
@@ -229,7 +253,7 @@ def modifier_reunion(request, pk):
     return render(request, 'membres/form_reunion.html', {'form': form, 'titre': 'Modifier la réunion'})
 
 
-@admin_required
+@check_acces('acces_reunions')
 def supprimer_reunion(request, pk):
     reunion = get_object_or_404(Reunion, pk=pk)
     if request.method == 'POST':
@@ -244,7 +268,6 @@ def supprimer_reunion(request, pk):
 @login_required
 def mon_espace(request):
     try:
-        # OPTIMISATION : select_related pour le membre
         membre = Membre.objects.select_related('poste', 'groupe').get(pk=request.user.membre_profil.pk)
     except Membre.DoesNotExist:
         return redirect('dashboard')
@@ -259,6 +282,70 @@ def mon_espace(request):
         'today': timezone.now().date()
     })
 
+
+@login_required
+def membres_a_jour(request):
+    membres = Membre.objects.filter(statut='actif').select_related('poste', 'groupe').annotate(
+        nb_cotisations=Count('cotisations'),
+        total_paye=Sum('cotisations__montant', filter=Q(cotisations__statut='payee'))
+    )
+    membres = [m for m in membres if m.statut_cotisation != "En retard"]
+    
+    return render(request, 'membres/liste_membres_public.html', {
+        'membres': membres,
+        'titre_page': "Liste des membres à jour",
+        'type_liste': 'a_jour'
+    })
+
+
+@login_required
+def membres_en_retard(request):
+    membres = Membre.objects.filter(statut='actif').select_related('poste', 'groupe').annotate(
+        nb_cotisations=Count('cotisations'),
+        total_paye=Sum('cotisations__montant', filter=Q(cotisations__statut='payee'))
+    )
+    membres = [m for m in membres if m.statut_cotisation == "En retard"]
+    
+    return render(request, 'membres/liste_membres_public.html', {
+        'membres': membres,
+        'titre_page': "Liste des membres en retard",
+        'type_liste': 'en_retard'
+    })
+
+
+# --- GESTION DES ACCÈS UTILISATEURS ---
+
+@admin_required
+def gerer_acces_utilisateurs(request):
+    utilisateurs = User.objects.filter(is_superuser=False)
+    return render(request, 'membres/gerer_acces.html', {'utilisateurs': utilisateurs})
+
+
+@admin_required
+def modifier_acces_utilisateur(request, user_id):
+    user = get_object_or_404(User, pk=user_id)
+    profil, created = ProfilAcces.objects.get_or_create(utilisateur=user)
+    
+    if request.method == 'POST':
+        profil.acces_membres = request.POST.get('acces_membres') == 'on'
+        profil.acces_cotisations = request.POST.get('acces_cotisations') == 'on'
+        profil.acces_depenses = request.POST.get('acces_depenses') == 'on'
+        profil.acces_reunions = request.POST.get('acces_reunions') == 'on'
+        profil.acces_groupes = request.POST.get('acces_groupes') == 'on'
+        profil.acces_postes = request.POST.get('acces_postes') == 'on'
+        profil.acces_parametres = request.POST.get('acces_parametres') == 'on'
+        profil.save()
+        
+        messages.success(request, f"Accès de {user.username} mis à jour.")
+        return redirect('gerer_acces_utilisateurs')
+        
+    return render(request, 'membres/modifier_acces.html', {
+        'user_obj': user,
+        'profil': profil
+    })
+
+
+# --- CRÉATION D'ACCÈS (INVITATION) ---
 
 @admin_required
 def creer_acces_membre(request, pk):
@@ -289,6 +376,26 @@ def creer_acces_membre(request, pk):
             return redirect('detail_membre', pk=membre.pk)
 
     return render(request, 'membres/creer_acces.html', {'membre': membre})
+
+
+@admin_required
+def reinitialiser_mot_de_passe(request, pk):
+    membre = get_object_or_404(Membre, pk=pk)
+    
+    if not membre.utilisateur:
+        messages.warning(request, "Ce membre n'a pas encore de compte. Utilisez 'Créer un accès' d'abord.")
+        return redirect('detail_membre', pk=membre.pk)
+
+    if request.method == 'POST':
+        token = get_random_string(length=32)
+        membre.invitation_token = token
+        membre.invitation_date = timezone.now()
+        membre.save()
+        
+        messages.success(request, f"Lien de réinitialisation généré pour {membre.utilisateur.username}. Copiez-le et envoyez-le au membre.")
+        return redirect('detail_membre', pk=membre.pk)
+
+    return render(request, 'membres/reinitialiser_acces.html', {'membre': membre})
 
 
 # --- VUE PUBLIQUE POUR DÉFINIR LE MOT DE PASSE ---
@@ -326,55 +433,3 @@ def definir_mot_de_passe(request, token):
             return redirect('login')
 
     return render(request, 'membres/definir_mot_de_passe.html', {'token': token})
-
-
-@admin_required
-def reinitialiser_mot_de_passe(request, pk):
-    membre = get_object_or_404(Membre, pk=pk)
-    
-    if not membre.utilisateur:
-        messages.warning(request, "Ce membre n'a pas encore de compte. Utilisez 'Créer un accès' d'abord.")
-        return redirect('detail_membre', pk=membre.pk)
-
-    if request.method == 'POST':
-        token = get_random_string(length=32)
-        membre.invitation_token = token
-        membre.invitation_date = timezone.now()
-        membre.save()
-        
-        messages.success(request, f"Lien de réinitialisation généré pour {membre.utilisateur.username}. Copiez-le et envoyez-le au membre.")
-        return redirect('detail_membre', pk=membre.pk)
-
-    return render(request, 'membres/reinitialiser_acces.html', {'membre': membre})
-
-
-@login_required
-def membres_a_jour(request):
-    # OPTIMISATION : select_related pour le poste et le groupe
-    membres = Membre.objects.filter(statut='actif').select_related('poste', 'groupe').annotate(
-        nb_cotisations=Count('cotisations'),
-        total_paye=Sum('cotisations__montant', filter=Q(cotisations__statut='payee'))
-    )
-    membres = [m for m in membres if m.statut_cotisation != "En retard"]
-    
-    return render(request, 'membres/liste_membres_public.html', {
-        'membres': membres,
-        'titre_page': "Liste des membres à jour",
-        'type_liste': 'a_jour'
-    })
-
-
-@login_required
-def membres_en_retard(request):
-    # OPTIMISATION : select_related pour le poste et le groupe
-    membres = Membre.objects.filter(statut='actif').select_related('poste', 'groupe').annotate(
-        nb_cotisations=Count('cotisations'),
-        total_paye=Sum('cotisations__montant', filter=Q(cotisations__statut='payee'))
-    )
-    membres = [m for m in membres if m.statut_cotisation == "En retard"]
-    
-    return render(request, 'membres/liste_membres_public.html', {
-        'membres': membres,
-        'titre_page': "Liste des membres en retard",
-        'type_liste': 'en_retard'
-    })

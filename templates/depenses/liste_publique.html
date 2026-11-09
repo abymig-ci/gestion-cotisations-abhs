@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Finances de l'association{% endblock %}
+{% block page_title %}Transparence Financière{% endblock %}
+
+{% block content %}
+
+<!-- LES 3 CARTES DE RÉSUMÉ -->
+<div class="row g-4 mb-4">
+    <!-- Carte 1 : Recettes -->
+    <div class="col-md-4">
+        <div class="card-custom kpi-card bg-success bg-opacity-10 border-success h-100">
+            <div class="kpi-icon green"><i class="bi bi-cash-stack"></i></div>
+            <div class="kpi-info">
+                <h3>{{ total_cotisations|floatformat:0 }} FCFA</h3>
+                <p>Total des recettes</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Carte 2 : Dépenses -->
+    <div class="col-md-4">
+        <div class="card-custom kpi-card bg-danger bg-opacity-10 border-danger h-100">
+            <div class="kpi-icon red"><i class="bi bi-cart-dash"></i></div>
+            <div class="kpi-info">
+                <h3>{{ total_depenses|floatformat:0 }} FCFA</h3>
+                <p>Total des dépenses</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Carte 3 : Solde en caisse -->
+    <div class="col-md-4">
+        <div class="card-custom kpi-card bg-primary bg-opacity-10 border-primary h-100">
+            <div class="kpi-icon blue"><i class="bi bi-wallet2"></i></div>
+            <div class="kpi-info">
+                <h3>{{ solde|floatformat:0 }} FCFA</h3>
+                <p>Solde en caisse</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- EN-TÊTE DE LA LISTE -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <p class="text-muted mb-0">Historique des sorties de fonds de l'association.</p>
+    <a href="{% url 'mon_espace' %}" class="btn-outline-custom">
+        <i class="bi bi-arrow-left"></i> Mon espace
+    </a>
+</div>
+
+<!-- TABLEAU DES DÉPENSES -->
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Libellé</th>
+                    <th>Catégorie</th>
+                    <th>Bénéficiaire</th>
+                    <th>Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in depenses %}
+                <tr>
+                    <td class="text-muted">{{ d.date_depense|date:"d/m/Y" }}</td>
+                    <td class="fw-bold">{{ d.libelle }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ d.get_categorie_display }}</span></td>
+                    <td>{{ d.membre|default:"—" }}</td>
+                    <td class="fw-bold text-danger">- {{ d.montant|floatformat:0 }} FCFA</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-5">Aucune dépense enregistrée.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

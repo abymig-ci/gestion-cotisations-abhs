@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Gérer les accès de {{ user_obj.username }}{% endblock %}
+{% block page_title %}Accès de {{ user_obj.username }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card-custom p-5">
+            <form method="post">
+                {% csrf_token %}
+                <h5 class="mb-4">Cochez les sections auxquelles cet utilisateur a accès :</h5>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="acces_membres" id="acces_membres" {% if profil.acces_membres %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="acces_membres">Gestion des Membres</label>
+                    <small class="d-block text-muted">Permet d'ajouter, modifier et voir les membres.</small>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="acces_cotisations" id="acces_cotisations" {% if profil.acces_cotisations %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="acces_cotisations">Gestion des Cotisations</label>
+                    <small class="d-block text-muted">Permet d'ajouter, modifier et supprimer des cotisations.</small>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="acces_depenses" id="acces_depenses" {% if profil.acces_depenses %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="acces_depenses">Gestion des Dépenses</label>
+                    <small class="d-block text-muted">Permet d'ajouter et modifier des dépenses.</small>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="acces_reunions" id="acces_reunions" {% if profil.acces_reunions %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="acces_reunions">Gestion des Réunions</label>
+                    <small class="d-block text-muted">Permet de programmer des réunions.</small>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="acces_groupes" id="acces_groupes" {% if profil.acces_groupes %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="acces_groupes">Gestion des Groupes</label>
+                    <small class="d-block text-muted">Permet de créer et gérer les groupes.</small>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="acces_postes" id="acces_postes" {% if profil.acces_postes %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="acces_postes">Gestion des Postes</label>
+                    <small class="d-block text-muted">Permet de gérer les postes (Président, etc.).</small>
+                </div>
+                
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" name="acces_parametres" id="acces_parametres" {% if profil.acces_parametres %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="acces_parametres">Accès aux Paramètres</label>
+                    <small class="d-block text-muted">Permet de modifier le montant des cotisations.</small>
+                </div>
+
+                <hr class="my-4 border-light">
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'gerer_acces_utilisateurs' %}" class="btn-outline-custom">Annuler</a>
+                    <button type="submit" class="btn-primary-custom"><i class="bi bi-save"></i> Enregistrer les accès</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
