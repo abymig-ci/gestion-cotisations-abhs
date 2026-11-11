@@ -34,10 +34,22 @@
             color: #64748b;
         }
         
+        .groupe-titre {
+            margin-top: 30px;
+            margin-bottom: 10px;
+            padding: 8px 15px;
+            background: #0a1c5c;
+            color: white;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
         .table-print {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.85rem;
+            margin-bottom: 20px;
         }
         
         .table-print th {
@@ -79,6 +91,15 @@
         }
         
         .btn-print:hover { background: #1e3a8a; }
+        
+        .total-groupe {
+            text-align: right;
+            font-weight: bold;
+            padding: 10px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-top: none;
+        }
     </style>
 </head>
 <body>
@@ -97,56 +118,71 @@
         <p>État des cotisations au {{ today|date:"d/m/Y" }}</p>
     </div>
 
-    <table class="table-print">
-        <thead>
-            <tr>
-                <th>Nom & Prénom</th>
-                <th>Groupe</th>
-                <th>Poste</th>
-                <th>Statut Actuel</th>
-                <th>Dernière Mensuelle Payée</th>
-                <th>Total Payé</th>
-                <th>Except. Impayées</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in etat_membres %}
-            <tr>
-                <td class="fw-bold">{{ item.membre.nom|upper }} {{ item.membre.prenom }}</td>
-                <td>{{ item.membre.groupe.nom|default:"—" }}</td>
-                <td>{{ item.membre.poste.nom|default:"—" }}</td>
-                <td>
-                    {% if item.membre.statut_cotisation == 'À jour' %}
-                        <span class="badge-print badge-ok">À jour</span>
-                    {% elif item.membre.statut_cotisation == 'En retard' %}
-                        <span class="badge-print badge-retard">En retard</span>
-                    {% elif item.membre.statut_cotisation == 'En carence' %}
-                        <span class="badge-print badge-carence">En carence</span>
-                    {% else %}
-                        <span class="badge-print" style="background:#e2e8f0; color:#475569;">{{ item.membre.statut_cotisation }}</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if item.derniere_mensuelle %}
-                        {{ item.derniere_mensuelle.get_mois_display }} {{ item.derniere_mensuelle.annee }}
-                    {% else %}
-                        <span style="color: #ef4444;">Aucune</span>
-                    {% endif %}
-                </td>
-                <td>{{ item.total_paye|floatformat:0 }} FCFA</td>
-                <td>
-                    {% if item.exceptionnelles_impayees %}
-                        <span style="color: #ef4444; font-weight: bold;">
-                            {{ item.exceptionnelles_impayees|length }} en attente
-                        </span>
-                    {% else %}
-                        <span style="color: #10b981;">Aucune</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% for item in etat_par_groupe %}
+        <div class="groupe-titre">
+            {% if item.groupe %}
+                {{ item.groupe.nom }}
+            {% else %}
+                Membres sans groupe
+            {% endif %}
+        </div>
+        
+        <table class="table-print">
+            <thead>
+                <tr>
+                    <th>Nom & Prénom</th>
+                    <th>Poste</th>
+                    <th>Statut Actuel</th>
+                    <th>Dernière Mensuelle Payée</th>
+                    <th>Total Payé</th>
+                    <th>Except. Impayées</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in item.membres %}
+                <tr>
+                    <td style="font-weight: bold;">{{ m.membre.nom|upper }} {{ m.membre.prenom }}</td>
+                    <td>{{ m.membre.poste.nom|default:"—" }}</td>
+                    <td>
+                        {% if m.membre.statut_cotisation == 'À jour' %}
+                            <span class="badge-print badge-ok">À jour</span>
+                        {% elif m.membre.statut_cotisation == 'En retard' %}
+                            <span class="badge-print badge-retard">En retard</span>
+                        {% elif m.membre.statut_cotisation == 'En carence' %}
+                            <span class="badge-print badge-carence">En carence</span>
+                        {% else %}
+                            <span class="badge-print" style="background:#e2e8f0; color:#475569;">{{ m.membre.statut_cotisation }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if m.derniere_mensuelle %}
+                            {{ m.derniere_mensuelle.get_mois_display }} {{ m.derniere_mensuelle.annee }}
+                        {% else %}
+                            <span style="color: #ef4444;">Aucune</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ m.total_paye|floatformat:0 }} FCFA</td>
+                    <td>
+                        {% if m.exceptionnelles_impayees %}
+                            <span style="color: #ef4444; font-weight: bold;">
+                                {{ m.exceptionnelles_impayees|length }} en attente
+                            </span>
+                        {% else %}
+                            <span style="color: #10b981;">Aucune</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="total-groupe">
+            Total collecté pour ce groupe : {{ item.total_groupe|floatformat:0 }} FCFA
+        </div>
+        
+    {% empty %}
+        <p style="text-align: center; color: #64748b;">Aucun membre enregistré.</p>
+    {% endfor %}
 
     <div style="margin-top: 30px; text-align: right; font-size: 0.8rem; color: #64748b;">
         Document généré le {{ today|date:"d/m/Y" }} par l'application de gestion A.B H.S.

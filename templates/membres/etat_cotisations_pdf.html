@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4 landscape; /* Format paysage pour que le tableau rentre bien */
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
+            color: #1e293b;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #0a1c5c;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header h1 { margin: 0; color: #0a1c5c; font-size: 16pt; }
+        .header p { margin: 5px 0 0; color: #64748b; font-size: 9pt; }
+        
+        .groupe-titre {
+            background: #0a1c5c;
+            color: white;
+            padding: 5px 10px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            font-size: 11pt;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+        th {
+            background: #f1f5f9;
+            text-align: left;
+            padding: 6px;
+            border: 1px solid #cbd5e1;
+        }
+        td {
+            padding: 6px;
+            border: 1px solid #cbd5e1;
+        }
+        
+        .badge-ok { color: #065f46; font-weight: bold; }
+        .badge-retard { color: #991b1b; font-weight: bold; }
+        .badge-carence { color: #92400e; font-weight: bold; }
+        
+        .total-groupe {
+            text-align: right;
+            font-weight: bold;
+            padding: 8px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-top: none;
+            font-size: 9pt;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ASSOCIATION DES BIOLOGISTES HAUT SASSANDRA</h1>
+        <p>État des cotisations au {{ today|date:"d/m/Y" }}</p>
+    </div>
+
+    {% for item in etat_par_groupe %}
+        <div class="groupe-titre">
+            {% if item.groupe %}{{ item.groupe.nom }}{% else %}Membres sans groupe{% endif %}
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom & Prénom</th>
+                    <th>Poste</th>
+                    <th>Statut Actuel</th>
+                    <th>Dernière Mensuelle</th>
+                    <th>Total Payé</th>
+                    <th>Except. Impayées</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in item.membres %}
+                <tr>
+                    <td><strong>{{ m.membre.nom|upper }} {{ m.membre.prenom }}</strong></td>
+                    <td>{{ m.membre.poste.nom|default:"—" }}</td>
+                    <td>
+                        {% if m.membre.statut_cotisation == 'À jour' %}<span class="badge-ok">À jour</span>
+                        {% elif m.membre.statut_cotisation == 'En retard' %}<span class="badge-retard">En retard</span>
+                        {% elif m.membre.statut_cotisation == 'En carence' %}<span class="badge-carence">En carence</span>
+                        {% else %}{{ m.membre.statut_cotisation }}{% endif %}
+                    </td>
+                    <td>{% if m.derniere_mensuelle %}{{ m.derniere_mensuelle.get_mois_display }} {{ m.derniere_mensuelle.annee }}{% else %}<span style="color:red;">Aucune</span>{% endif %}</td>
+                    <td>{{ m.total_paye|floatformat:0 }} FCFA</td>
+                    <td>{% if m.exceptionnelles_impayees %}<span style="color:red;">{{ m.exceptionnelles_impayees|length }} en attente</span>{% else %}<span style="color:green;">Aucune</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="total-groupe">Total collecté : {{ item.total_groupe|floatformat:0 }} FCFA</div>
+    {% endfor %}
+</body>
+</html>

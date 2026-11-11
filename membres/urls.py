@@ -33,5 +33,7 @@ urlpatterns = [
     path('<int:pk>/reinitialiser/', views.reinitialiser_mot_de_passe, name='reinitialiser_mot_de_passe'),
     path('public/a-jour/', views.membres_a_jour, name='membres_a_jour'),
     path('public/en-retard/', views.membres_en_retard, name='membres_en_retard'),
-    path('etat-cotisations/', views.etat_cotisations_impression, name='etat_cotisations_impression'),
+    
+    # NOUVELLE URL POUR LE PDF
+    path('etat-cotisations-pdf/', views.etat_cotisations_pdf, name='etat_cotisations_pdf'),
 ]

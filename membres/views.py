@@ -434,37 +434,82 @@ def definir_mot_de_passe(request, token):
 
     return render(request, 'membres/definir_mot_de_passe.html', {'token': token})
 
+from django.http import HttpResponse
+from weasyprint import HTML
+from django.template.loader import render_to_string
+
 @admin_required
-def etat_cotisations_impression(request):
-    # On récupère tous les membres actifs avec leurs infos
-    membres = Membre.objects.select_related('poste', 'groupe').filter(statut='actif').order_by('nom', 'prenom')
+def etat_cotisations_pdf(request):
+    # On récupère tous les groupes
+    groupes = Groupe.objects.all().order_by('nom')
     
-    # On prépare une liste avec les détails pour chaque membre
-    etat_membres = []
-    for membre in membres:
-        # Dernière cotisation mensuelle payée
-        derniere_mensuelle = membre.cotisations.filter(
-            type_cotisation='mensuelle', statut='payee'
-        ).order_by('-annee', '-mois').first()
+    etat_par_groupe = []
+    
+    for groupe in groupes:
+        membres_du_groupe = Membre.objects.filter(
+            statut='actif', groupe=groupe
+        ).select_related('poste').order_by('nom', 'prenom')
         
-        # Total payé (toutes cotisations confondues)
-        total_paye = membre.cotisations.filter(statut='payee').aggregate(
-            total=Sum('montant')
-        )['total'] or 0
+        liste_membres = []
+        for membre in membres_du_groupe:
+            derniere_mensuelle = membre.cotisations.filter(
+                type_cotisation='mensuelle', statut='payee'
+            ).order_by('-annee', '-mois').first()
+            
+            total_paye = membre.cotisations.filter(statut='payee').aggregate(
+                total=Sum('montant')
+            )['total'] or 0
+            
+            exceptionnelles_impayees = membre.cotisations.filter(
+                type_cotisation='exceptionnelle', statut='en_attente'
+            )
+            
+            liste_membres.append({
+                'membre': membre,
+                'derniere_mensuelle': derniere_mensuelle,
+                'total_paye': total_paye,
+                'exceptionnelles_impayees': exceptionnelles_impayees,
+            })
         
-        # Cotisations exceptionnelles impayées
-        exceptionnelles_impayees = membre.cotisations.filter(
-            type_cotisation='exceptionnelle', statut='en_attente'
-        )
-        
-        etat_membres.append({
-            'membre': membre,
-            'derniere_mensuelle': derniere_mensuelle,
-            'total_paye': total_paye,
-            'exceptionnelles_impayees': exceptionnelles_impayees,
+        if liste_membres:
+            etat_par_groupe.append({
+                'groupe': groupe,
+                'membres': liste_membres,
+                'total_groupe': sum(m['total_paye'] for m in liste_membres)
+            })
+    
+    # Membres sans groupe
+    membres_sans_groupe = Membre.objects.filter(statut='actif', groupe__isnull=True).select_related('poste').order_by('nom', 'prenom')
+    if membres_sans_groupe.exists():
+        liste_sans_groupe = []
+        for membre in membres_sans_groupe:
+            derniere_mensuelle = membre.cotisations.filter(type_cotisation='mensuelle', statut='payee').order_by('-annee', '-mois').first()
+            total_paye = membre.cotisations.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
+            exceptionnelles_impayees = membre.cotisations.filter(type_cotisation='exceptionnelle', statut='en_attente')
+            liste_sans_groupe.append({
+                'membre': membre,
+                'derniere_mensuelle': derniere_mensuelle,
+                'total_paye': total_paye,
+                'exceptionnelles_impayees': exceptionnelles_impayees,
+            })
+        etat_par_groupe.append({
+            'groupe': None,
+            'membres': liste_sans_groupe,
+            'total_groupe': sum(m['total_paye'] for m in liste_sans_groupe)
         })
-    
-    return render(request, 'membres/etat_cotisations_impression.html', {
-        'etat_membres': etat_membres,
+
+    # Rendu du template en HTML
+    html_string = render_to_string('membres/etat_cotisations_pdf.html', {
+        'etat_par_groupe': etat_par_groupe,
         'today': timezone.now().date(),
     })
+
+    # Génération du PDF
+    html = HTML(string=html_string)
+    pdf = html.write_pdf()
+
+    # Préparation de la réponse HTTP
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="etat_cotisations.pdf"'
+    
+    return response
