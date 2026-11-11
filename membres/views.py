@@ -433,3 +433,38 @@ def definir_mot_de_passe(request, token):
             return redirect('login')
 
     return render(request, 'membres/definir_mot_de_passe.html', {'token': token})
+
+@admin_required
+def etat_cotisations_impression(request):
+    # On récupère tous les membres actifs avec leurs infos
+    membres = Membre.objects.select_related('poste', 'groupe').filter(statut='actif').order_by('nom', 'prenom')
+    
+    # On prépare une liste avec les détails pour chaque membre
+    etat_membres = []
+    for membre in membres:
+        # Dernière cotisation mensuelle payée
+        derniere_mensuelle = membre.cotisations.filter(
+            type_cotisation='mensuelle', statut='payee'
+        ).order_by('-annee', '-mois').first()
+        
+        # Total payé (toutes cotisations confondues)
+        total_paye = membre.cotisations.filter(statut='payee').aggregate(
+            total=Sum('montant')
+        )['total'] or 0
+        
+        # Cotisations exceptionnelles impayées
+        exceptionnelles_impayees = membre.cotisations.filter(
+            type_cotisation='exceptionnelle', statut='en_attente'
+        )
+        
+        etat_membres.append({
+            'membre': membre,
+            'derniere_mensuelle': derniere_mensuelle,
+            'total_paye': total_paye,
+            'exceptionnelles_impayees': exceptionnelles_impayees,
+        })
+    
+    return render(request, 'membres/etat_cotisations_impression.html', {
+        'etat_membres': etat_membres,
+        'today': timezone.now().date(),
+    })

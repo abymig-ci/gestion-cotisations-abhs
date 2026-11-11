@@ -29,9 +29,15 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <p class="text-muted mb-0">Gérez la liste des biologistes membres de l'association.</p>
-    <a href="{% url 'ajouter_membre' %}" class="btn-primary-custom">
-        <i class="bi bi-person-plus-fill"></i> Nouveau membre
-    </a>
+    <div class="d-flex gap-2">
+        <!-- BOUTON D'IMPRESSION AJOUTÉ -->
+        <a href="{% url 'etat_cotisations_impression' %}" class="btn btn-outline-dark">
+            <i class="bi bi-printer"></i> Imprimer l'état
+        </a>
+        <a href="{% url 'ajouter_membre' %}" class="btn-primary-custom">
+            <i class="bi bi-person-plus-fill"></i> Nouveau membre
+        </a>
+    </div>
 </div>
 
 <div class="card-custom">
@@ -89,7 +95,6 @@
                         <a href="{% url 'modifier_membre' m.pk %}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle" title="Modifier" style="width:32px; height:32px; padding:5px;">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <!-- BOUTON SUPPRIMER RETIRÉ -->
                     </td>
                 </tr>
                 {% empty %}
