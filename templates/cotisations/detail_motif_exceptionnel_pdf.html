@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
+            color: #1e293b;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Centre le bloc logo + texte */
+            gap: 20px;
+            border-bottom: 2px solid #0a1c5c;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .header img {
+            max-width: 80px;
+            border-radius: 50%;
+        }
+        .header h1 { margin: 0; color: #0a1c5c; font-size: 16pt; }
+        .header p { margin: 5px 0 0; color: #64748b; font-size: 9pt; }
+        
+        .resume {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 10pt;
+        }
+        
+        .resume-box {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            margin: 0 5px;
+            border-radius: 6px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+        th {
+            background: #f1f5f9;
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            font-weight: bold;
+        }
+        td {
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+        }
+        
+        .text-success { color: #065f46; font-weight: bold; }
+        .text-danger { color: #991b1b; font-weight: bold; }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: right;
+            font-size: 8pt;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <!-- LOGO EN BASE64 -->
+        {% if logo_base64 %}
+            <img src="{{ logo_base64 }}" alt="Logo A.B H.S">
+        {% endif %}
+        
+        <div>
+            <h1>ASSOCIATION DES BIOLOGISTES HAUT SASSANDRA</h1>
+            <p>Détails de la cotisation exceptionnelle : {{ libelle }}</p>
+            <p>Généré le {{ today|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+
+    <div class="resume">
+        <div class="resume-box">
+            <strong style="display:block; font-size: 14pt; color: #065f46;">{{ nb_payes }}</strong>
+            Membres ayant payé
+        </div>
+        <div class="resume-box">
+            <strong style="display:block; font-size: 14pt; color: #991b1b;">{{ nb_impayes }}</strong>
+            Membres en attente
+        </div>
+        <div class="resume-box">
+            <strong style="display:block; font-size: 14pt; color: #0a1c5c;">{{ total_collecte|floatformat:0 }} FCFA</strong>
+            Total collecté
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Membre</th>
+                <th>Groupe</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Date paiement</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in cotisations %}
+            <tr>
+                <td><strong>{{ c.membre.nom|upper }} {{ c.membre.prenom }}</strong></td>
+                <td>{{ c.membre.groupe.nom|default:"—" }}</td>
+                <td>{{ c.montant|floatformat:0 }} FCFA</td>
+                <td>
+                    {% if c.statut == 'payee' %}
+                        <span class="text-success">Payée</span>
+                    {% else %}
+                        <span class="text-danger">En attente</span>
+                    {% endif %}
+                </td>
+                <td>{{ c.date_paiement|date:"d/m/Y"|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center; color:#64748b;">Aucun membre pour ce motif.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Document généré le {{ today|date:"d/m/Y" }} par l'application de gestion A.B H.S.
+    </div>
+</body>
+</html>

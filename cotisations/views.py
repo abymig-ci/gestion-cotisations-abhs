@@ -7,10 +7,27 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 from django import forms
 from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse
+from weasyprint import HTML
+from django.template.loader import render_to_string
+import base64
+import os
+from django.conf import settings
 
 from .models import Cotisation, Parametre
 from .forms import CotisationForm, ParametreForm
 from membres.models import Membre, ProfilAcces
+
+
+# --- FONCTION POUR LE LOGO EN BASE64 ---
+def get_logo_base64():
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'logo.png')
+    try:
+        with open(logo_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+            return f"data:image/png;base64,{encoded_string}"
+    except FileNotFoundError:
+        return ""
 
 
 # --- DÉCORATEUR POUR LE NOUVEAU SYSTÈME D'ACCÈS ---
@@ -329,3 +346,133 @@ def parametres(request):
     else:
         form = ParametreForm(instance=parametre)
     return render(request, 'cotisations/parametres.html', {'form': form})
+
+
+@check_acces('acces_cotisations')
+def liste_motifs_exceptionnels(request):
+    # On récupère les libellés, on les nettoie et on supprime les vides/doublons
+    libelles_bruts = Cotisation.objects.filter(type_cotisation='exceptionnelle').values_list('libelle', flat=True)
+    
+    # On crée un set pour éliminer les doublons, et on nettoie les espaces
+    libelles_uniques = set()
+    for libelle in libelles_bruts:
+        if libelle and libelle.strip():
+            libelles_uniques.add(libelle.strip())
+    
+    motifs = []
+    for libelle in libelles_uniques:
+        cotisations_du_motif = Cotisation.objects.filter(type_cotisation='exceptionnelle', libelle=libelle)
+        
+        montant_unitaire = cotisations_du_motif.first().montant
+        total_collecte = cotisations_du_motif.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
+        nb_payes = cotisations_du_motif.filter(statut='payee').count()
+        nb_total = cotisations_du_motif.count()
+        nb_impayes = nb_total - nb_payes
+        
+        motifs.append({
+            'libelle': libelle,
+            'montant_unitaire': montant_unitaire,
+            'total_collecte': total_collecte,
+            'nb_payes': nb_payes,
+            'nb_impayes': nb_impayes,
+            'nb_total': nb_total,
+        })
+    
+    # On trie par libellé
+    motifs = sorted(motifs, key=lambda x: x['libelle'].lower())
+    
+    return render(request, 'cotisations/liste_motifs_exceptionnels.html', {
+        'motifs': motifs,
+    })
+
+
+@check_acces('acces_cotisations')
+def detail_motif_exceptionnel(request, libelle):
+    cotisations = Cotisation.objects.filter(
+        type_cotisation='exceptionnelle', 
+        libelle=libelle
+    ).select_related('membre').order_by('membre__nom', 'membre__prenom')
+    
+    total_collecte = cotisations.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
+    nb_payes = cotisations.filter(statut='payee').count()
+    nb_impayes = cotisations.filter(statut='en_attente').count()
+    
+    return render(request, 'cotisations/detail_motif_exceptionnel.html', {
+        'libelle': libelle,
+        'cotisations': cotisations,
+        'total_collecte': total_collecte,
+        'nb_payes': nb_payes,
+        'nb_impayes': nb_impayes,
+    })
+
+
+@check_acces('acces_cotisations')
+def liste_motifs_exceptionnels_pdf(request):
+    libelles = Cotisation.objects.filter(type_cotisation='exceptionnelle').values_list('libelle', flat=True).distinct()
+    
+    motifs = []
+    for libelle in libelles:
+        if not libelle:
+            continue
+            
+        cotisations_du_motif = Cotisation.objects.filter(type_cotisation='exceptionnelle', libelle=libelle)
+        montant_unitaire = cotisations_du_motif.first().montant
+        total_collecte = cotisations_du_motif.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
+        nb_payes = cotisations_du_motif.filter(statut='payee').count()
+        nb_total = cotisations_du_motif.count()
+        nb_impayes = nb_total - nb_payes
+        
+        motifs.append({
+            'libelle': libelle,
+            'montant_unitaire': montant_unitaire,
+            'total_collecte': total_collecte,
+            'nb_payes': nb_payes,
+            'nb_impayes': nb_impayes,
+            'nb_total': nb_total,
+        })
+    
+    motifs = sorted(motifs, key=lambda x: x['libelle'])
+
+    html_string = render_to_string('cotisations/motifs_exceptionnels_pdf.html', {
+        'motifs': motifs,
+        'today': timezone.now().date(),
+        'logo_base64': get_logo_base64(),
+    })
+
+    html = HTML(string=html_string)
+    pdf = html.write_pdf()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="motifs_exceptionnels.pdf"'
+    
+    return response
+
+
+@check_acces('acces_cotisations')
+def detail_motif_exceptionnel_pdf(request, libelle):
+    cotisations = Cotisation.objects.filter(
+        type_cotisation='exceptionnelle', 
+        libelle=libelle
+    ).select_related('membre').order_by('membre__nom', 'membre__prenom')
+    
+    total_collecte = cotisations.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
+    nb_payes = cotisations.filter(statut='payee').count()
+    nb_impayes = cotisations.filter(statut='en_attente').count()
+
+    html_string = render_to_string('cotisations/detail_motif_exceptionnel_pdf.html', {
+        'libelle': libelle,
+        'cotisations': cotisations,
+        'total_collecte': total_collecte,
+        'nb_payes': nb_payes,
+        'nb_impayes': nb_impayes,
+        'today': timezone.now().date(),
+        'logo_base64': get_logo_base64(),
+    })
+
+    html = HTML(string=html_string)
+    pdf = html.write_pdf()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="detail_{libelle}.pdf"'
+    
+    return response

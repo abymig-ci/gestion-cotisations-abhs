@@ -1,10 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <style>
         @page {
-            size: A4 landscape; /* Format paysage pour que le tableau rentre bien */
+            size: A4 landscape;
             margin: 1.5cm;
         }
         body {
@@ -17,6 +18,12 @@
             border-bottom: 2px solid #0a1c5c;
             padding-bottom: 10px;
             margin-bottom: 20px;
+        }
+        /* Style pour le logo */
+        .header img {
+            max-width: 80px;
+            margin-bottom: 10px;
+            border-radius: 50%;
         }
         .header h1 { margin: 0; color: #0a1c5c; font-size: 16pt; }
         .header p { margin: 5px 0 0; color: #64748b; font-size: 9pt; }
@@ -65,6 +72,9 @@
 </head>
 <body>
     <div class="header">
+        <!-- AJOUT DU LOGO ICI -->
+        <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo.png' %}" alt="Logo A.B H.S">
+        
         <h1>ASSOCIATION DES BIOLOGISTES HAUT SASSANDRA</h1>
         <p>État des cotisations au {{ today|date:"d/m/Y" }}</p>
     </div>

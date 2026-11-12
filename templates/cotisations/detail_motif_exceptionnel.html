@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}{{ libelle }}{% endblock %}
+{% block page_title %}Détails : {{ libelle }}{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card-custom kpi-card bg-success bg-opacity-10 border-success h-100">
+            <div class="kpi-icon green"><i class="bi bi-check-circle"></i></div>
+            <div class="kpi-info">
+                <h3>{{ nb_payes }}</h3>
+                <p>Membres ayant payé</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom kpi-card bg-danger bg-opacity-10 border-danger h-100">
+            <div class="kpi-icon red"><i class="bi bi-exclamation-circle"></i></div>
+            <div class="kpi-info">
+                <h3>{{ nb_impayes }}</h3>
+                <p>Membres en attente</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom kpi-card bg-primary bg-opacity-10 border-primary h-100">
+            <div class="kpi-icon blue"><i class="bi bi-wallet2"></i></div>
+            <div class="kpi-info">
+                <h3>{{ total_collecte|floatformat:0 }} FCFA</h3>
+                <p>Total collecté</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <p class="text-muted mb-0">Liste des membres concernés par la cotisation "{{ libelle }}".</p>
+    <div class="d-flex gap-2">
+        <!-- BOUTON POUR OUVRIR LE PDF DANS UN NOUVEL ONGLET -->
+        <a href="{% url 'detail_motif_exceptionnel_pdf' libelle %}" target="_blank" class="btn btn-outline-dark">
+            <i class="bi bi-printer"></i> Imprimer les détails
+        </a>
+        <a href="{% url 'liste_motifs_exceptionnels' %}" class="btn-outline-custom">
+            <i class="bi bi-arrow-left"></i> Retour aux motifs
+        </a>
+    </div>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Membre</th>
+                    <th>Groupe</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                    <th>Date paiement</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in cotisations %}
+                <tr>
+                    <td>
+                        <a href="{% url 'detail_membre' c.membre.pk %}" class="fw-bold text-decoration-none text-dark">
+                            {{ c.membre.nom|upper }} {{ c.membre.prenom }}
+                        </a>
+                    </td>
+                    <td class="text-muted">{{ c.membre.groupe.nom|default:"—" }}</td>
+                    <td class="fw-bold">{{ c.montant|floatformat:0 }} FCFA</td>
+                    <td>
+                        {% if c.statut == 'payee' %}
+                            <span class="badge-custom badge-success">Payée</span>
+                        {% else %}
+                            <span class="badge-custom badge-danger">En attente</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">{{ c.date_paiement|date:"d/m/Y"|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-5">Aucun membre pour ce motif.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -11,4 +11,14 @@ urlpatterns = [
     path('cotisations/<int:pk>/supprimer/', views.supprimer_cotisation, name='supprimer_cotisation'),
     path('cotisations/exceptionnelle/ajouter/', views.creer_cotisation_exceptionnelle, name='creer_cotisation_exceptionnelle'),
     path('parametres/', views.parametres, name='parametres'),
+    
+    # URLs pour les motifs exceptionnels
+    path('motifs-exceptionnels/', views.liste_motifs_exceptionnels, name='liste_motifs_exceptionnels'),
+    
+    # Les URLs avec "pdf/" DOIVENT ÊTRE AVANT celles avec <str:libelle>
+    path('motifs-exceptionnels/pdf/', views.liste_motifs_exceptionnels_pdf, name='liste_motifs_exceptionnels_pdf'),
+    path('motifs-exceptionnels/<str:libelle>/pdf/', views.detail_motif_exceptionnel_pdf, name='detail_motif_exceptionnel_pdf'),
+    
+    # URL de détail (doit être en dernier)
+    path('motifs-exceptionnels/<str:libelle>/', views.detail_motif_exceptionnel, name='detail_motif_exceptionnel'),
 ]

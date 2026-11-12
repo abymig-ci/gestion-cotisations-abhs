@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Motifs Exceptionnels{% endblock %}
+{% block page_title %}Suivi des Cotisations Exceptionnelles{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <p class="text-muted mb-0">Cliquez sur un motif pour voir la liste détaillée des membres.</p>
+    <div class="d-flex gap-2">
+        <!-- BOUTON D'IMPRESSION AJOUTÉ -->
+        <a href="{% url 'liste_motifs_exceptionnels_pdf' %}" target="_blank" class="btn btn-outline-dark">
+            <i class="bi bi-printer"></i> Imprimer la liste
+        </a>
+        <a href="{% url 'liste_cotisations' %}" class="btn-outline-custom">
+            <i class="bi bi-arrow-left"></i> Retour aux cotisations
+        </a>
+    </div>
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Motif / Libellé</th>
+                    <th>Montant Unitaire</th>
+                    <th>Membres ayant payé</th>
+                    <th>Membres en attente</th>
+                    <th>Total Collecté</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in motifs %}
+                <tr>
+                    <td class="fw-bold text-primary">{{ m.libelle }}</td>
+                    <td>{{ m.montant_unitaire|floatformat:0 }} FCFA</td>
+                    <td>
+                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
+                            <i class="bi bi-check-circle-fill me-1"></i> {{ m.nb_payes }} / {{ m.nb_total }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if m.nb_impayes > 0 %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">
+                                <i class="bi bi-exclamation-circle-fill me-1"></i> {{ m.nb_impayes }}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">Terminé</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-bold text-success">{{ m.total_collecte|floatformat:0 }} FCFA</td>
+                    <td class="text-end">
+                        <a href="{% url 'detail_motif_exceptionnel' m.libelle %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> Détails
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-5">Aucune cotisation exceptionnelle enregistrée.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

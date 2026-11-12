@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
+            color: #1e293b;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            border-bottom: 2px solid #0a1c5c;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .header img {
+            max-width: 80px;
+            border-radius: 50%;
+        }
+        .header h1 { margin: 0; color: #0a1c5c; font-size: 16pt; }
+        .header p { margin: 5px 0 0; color: #64748b; font-size: 9pt; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+        th {
+            background: #f1f5f9;
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            font-weight: bold;
+        }
+        td {
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+        }
+        
+        .text-success { color: #065f46; font-weight: bold; }
+        .text-danger { color: #991b1b; font-weight: bold; }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: right;
+            font-size: 8pt;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <!-- LOGO EN BASE64 -->
+        {% if logo_base64 %}
+            <img src="{{ logo_base64 }}" alt="Logo A.B H.S">
+        {% endif %}
+        
+        <div>
+            <h1>ASSOCIATION DES BIOLOGISTES HAUT SASSANDRA</h1>
+            <p>Suivi des Cotisations Exceptionnelles au {{ today|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Motif / Libellé</th>
+                <th>Montant Unitaire</th>
+                <th>Membres ayant payé</th>
+                <th>Membres en attente</th>
+                <th>Total Collecté</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in motifs %}
+            <tr>
+                <td><strong>{{ m.libelle }}</strong></td>
+                <td>{{ m.montant_unitaire|floatformat:0 }} FCFA</td>
+                <td>{{ m.nb_payes }} / {{ m.nb_total }}</td>
+                <td>
+                    {% if m.nb_impayes > 0 %}
+                        <span class="text-danger">{{ m.nb_impayes }}</span>
+                    {% else %}
+                        <span class="text-success">0</span>
+                    {% endif %}
+                </td>
+                <td class="text-success">{{ m.total_collecte|floatformat:0 }} FCFA</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center; color:#64748b;">Aucune cotisation exceptionnelle enregistrée.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Document généré le {{ today|date:"d/m/Y" }} par l'application de gestion A.B H.S.
+    </div>
+</body>
+</html>
