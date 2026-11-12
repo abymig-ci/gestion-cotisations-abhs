@@ -7,26 +7,36 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 from django import forms
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 from weasyprint import HTML
 from django.template.loader import render_to_string
+from django.core.serializers import serialize
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 import base64
 import os
+import json
+from datetime import datetime
 from django.conf import settings
 
-from .models import Cotisation, Parametre
+from .models import Cotisation, Parametre, Sauvegarde
 from .forms import CotisationForm, ParametreForm
 from membres.models import Membre, ProfilAcces
 
 
 # --- FONCTION POUR LE LOGO EN BASE64 ---
 def get_logo_base64():
-    logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'logo.png')
     try:
+        parametre = Parametre.objects.first()
+        if parametre and parametre.logo:
+            logo_path = parametre.logo.path
+        else:
+            logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'logo.png')
+            
         with open(logo_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
             return f"data:image/png;base64,{encoded_string}"
-    except FileNotFoundError:
+    except (FileNotFoundError, ValueError):
         return ""
 
 
@@ -338,7 +348,7 @@ def creer_cotisation_exceptionnelle(request):
 def parametres(request):
     parametre, created = Parametre.objects.get_or_create(id=1)
     if request.method == 'POST':
-        form = ParametreForm(request.POST, instance=parametre)
+        form = ParametreForm(request.POST, request.FILES, instance=parametre)
         if form.is_valid():
             form.save()
             messages.success(request, "Paramètres enregistrés avec succès.")
@@ -350,10 +360,8 @@ def parametres(request):
 
 @check_acces('acces_cotisations')
 def liste_motifs_exceptionnels(request):
-    # On récupère les libellés, on les nettoie et on supprime les vides/doublons
     libelles_bruts = Cotisation.objects.filter(type_cotisation='exceptionnelle').values_list('libelle', flat=True)
     
-    # On crée un set pour éliminer les doublons, et on nettoie les espaces
     libelles_uniques = set()
     for libelle in libelles_bruts:
         if libelle and libelle.strip():
@@ -362,7 +370,6 @@ def liste_motifs_exceptionnels(request):
     motifs = []
     for libelle in libelles_uniques:
         cotisations_du_motif = Cotisation.objects.filter(type_cotisation='exceptionnelle', libelle=libelle)
-        
         montant_unitaire = cotisations_du_motif.first().montant
         total_collecte = cotisations_du_motif.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
         nb_payes = cotisations_du_motif.filter(statut='payee').count()
@@ -378,7 +385,6 @@ def liste_motifs_exceptionnels(request):
             'nb_total': nb_total,
         })
     
-    # On trie par libellé
     motifs = sorted(motifs, key=lambda x: x['libelle'].lower())
     
     return render(request, 'cotisations/liste_motifs_exceptionnels.html', {
@@ -476,3 +482,89 @@ def detail_motif_exceptionnel_pdf(request, libelle):
     response['Content-Disposition'] = f'inline; filename="detail_{libelle}.pdf"'
     
     return response
+
+
+# --- VUES POUR LES SAUVEGARDES ---
+
+@check_acces('acces_parametres')
+def liste_sauvegardes(request):
+    sauvegardes = Sauvegarde.objects.all()
+    return render(request, 'cotisations/sauvegardes.html', {'sauvegardes': sauvegardes})
+
+
+@check_acces('acces_parametres')
+def creer_sauvegarde(request):
+    if request.method == 'POST':
+        # On génère le nom du fichier
+        date_str = datetime.now().strftime('%Y-%m-%d-%H%M')
+        nom_fichier = f"sauvegarde-{date_str}.json"
+        
+        # On récupère TOUTES les données de la base
+        from membres.models import Membre, Groupe, Poste, Reunion, ProfilAcces
+        from depenses.models import Depense
+        
+        data = {
+            'membres': json.loads(serialize('json', Membre.objects.all())),
+            'groupes': json.loads(serialize('json', Groupe.objects.all())),
+            'postes': json.loads(serialize('json', Poste.objects.all())),
+            'reunions': json.loads(serialize('json', Reunion.objects.all())),
+            'profils_acces': json.loads(serialize('json', ProfilAcces.objects.all())),
+            'cotisations': json.loads(serialize('json', Cotisation.objects.all())),
+            'parametres': json.loads(serialize('json', Parametre.objects.all())),
+            'depenses': json.loads(serialize('json', Depense.objects.all())),
+        }
+        
+        # On enregistre le fichier dans le dossier media
+        chemin_fichier = os.path.join('sauvegardes', nom_fichier)
+        fichier = default_storage.save(chemin_fichier, ContentFile(json.dumps(data, indent=2).encode('utf-8')))
+        
+        # On enregistre l'info dans la base
+        taille = default_storage.size(fichier)
+        Sauvegarde.objects.create(nom_fichier=nom_fichier, taille=taille)
+        
+        # --- GESTION DE LA LIMITE DE 7 SAUVEGARDES ---
+        sauvegardes = Sauvegarde.objects.all().order_by('-date_creation')
+        if sauvegardes.count() > 7:
+            # On supprime les plus anciennes
+            for vieille_sauvegarde in sauvegardes[7:]:
+                chemin_vieux = os.path.join('sauvegardes', vieille_sauvegarde.nom_fichier)
+                if default_storage.exists(chemin_vieux):
+                    default_storage.delete(chemin_vieux)
+                vieille_sauvegarde.delete()
+        
+        messages.success(request, f"Sauvegarde '{nom_fichier}' créée avec succès.")
+        return redirect('liste_sauvegardes')
+    
+    return redirect('liste_sauvegardes')
+
+
+@check_acces('acces_parametres')
+def supprimer_sauvegarde(request, pk):
+    sauvegarde = get_object_or_404(Sauvegarde, pk=pk)
+    if request.method == 'POST':
+        # Supprimer le fichier physique
+        chemin = os.path.join('sauvegardes', sauvegarde.nom_fichier)
+        if default_storage.exists(chemin):
+            default_storage.delete(chemin)
+        
+        # Supprimer l'entrée en base
+        sauvegarde.delete()
+        messages.success(request, "Sauvegarde supprimée.")
+        return redirect('liste_sauvegardes')
+    return render(request, 'cotisations/confirmer_suppression_sauvegarde.html', {'sauvegarde': sauvegarde})
+
+
+@check_acces('acces_parametres')
+def telecharger_sauvegarde(request, pk):
+    sauvegarde = get_object_or_404(Sauvegarde, pk=pk)
+    chemin = os.path.join('sauvegardes', sauvegarde.nom_fichier)
+    
+    if default_storage.exists(chemin):
+        # On ouvre le fichier
+        fichier = default_storage.open(chemin, 'rb')
+        # On le renvoie en téléchargement
+        response = FileResponse(fichier, as_attachment=True, filename=sauvegarde.nom_fichier)
+        return response
+    else:
+        messages.error(request, "Le fichier physique est introuvable.")
+        return redirect('liste_sauvegardes')

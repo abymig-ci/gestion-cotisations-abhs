@@ -1,0 +1,1003 @@
+{
+  "membres": [
+    {
+      "model": "membres.membre",
+      "pk": 8,
+      "fields": {
+        "utilisateur": null,
+        "invitation_token": null,
+        "invitation_date": null,
+        "nom": "ALLOU",
+        "prenom": "BOUA",
+        "telephone": "",
+        "email": "",
+        "date_adhesion": "2026-03-08",
+        "poste": 5,
+        "groupe": 3,
+        "statut": "actif"
+      }
+    },
+    {
+      "model": "membres.membre",
+      "pk": 6,
+      "fields": {
+        "utilisateur": null,
+        "invitation_token": null,
+        "invitation_date": null,
+        "nom": "GNAMESSOU",
+        "prenom": "MICHEL",
+        "telephone": "",
+        "email": "gnamessouaby@gmail.com",
+        "date_adhesion": "2026-01-01",
+        "poste": 3,
+        "groupe": 2,
+        "statut": "actif"
+      }
+    },
+    {
+      "model": "membres.membre",
+      "pk": 9,
+      "fields": {
+        "utilisateur": null,
+        "invitation_token": null,
+        "invitation_date": null,
+        "nom": "KAOUE",
+        "prenom": "PAUL",
+        "telephone": "",
+        "email": "",
+        "date_adhesion": "2026-03-08",
+        "poste": 4,
+        "groupe": 3,
+        "statut": "actif"
+      }
+    },
+    {
+      "model": "membres.membre",
+      "pk": 10,
+      "fields": {
+        "utilisateur": 4,
+        "invitation_token": null,
+        "invitation_date": null,
+        "nom": "YAPOGA",
+        "prenom": "ABEL",
+        "telephone": "",
+        "email": "",
+        "date_adhesion": "2026-10-09",
+        "poste": 1,
+        "groupe": 3,
+        "statut": "actif"
+      }
+    },
+    {
+      "model": "membres.membre",
+      "pk": 4,
+      "fields": {
+        "utilisateur": 2,
+        "invitation_token": null,
+        "invitation_date": null,
+        "nom": "ZAHINNE",
+        "prenom": "ULRICH",
+        "telephone": "",
+        "email": "",
+        "date_adhesion": "2026-11-03",
+        "poste": 4,
+        "groupe": 2,
+        "statut": "actif"
+      }
+    },
+    {
+      "model": "membres.membre",
+      "pk": 7,
+      "fields": {
+        "utilisateur": 3,
+        "invitation_token": null,
+        "invitation_date": null,
+        "nom": "ZAOULI",
+        "prenom": "BI MARIUS",
+        "telephone": "",
+        "email": "",
+        "date_adhesion": "2026-02-01",
+        "poste": 4,
+        "groupe": 2,
+        "statut": "actif"
+      }
+    }
+  ],
+  "groupes": [
+    {
+      "model": "membres.groupe",
+      "pk": 4,
+      "fields": {
+        "nom": "Groupe 1 : Issia-Sa\u00eeoua",
+        "description": "",
+        "date_creation": "2026-11-04T14:20:34.194Z"
+      }
+    },
+    {
+      "model": "membres.groupe",
+      "pk": 3,
+      "fields": {
+        "nom": "Groupe 2 : Zoukougbeu-PMI-FSU",
+        "description": "",
+        "date_creation": "2026-11-04T14:19:46.794Z"
+      }
+    },
+    {
+      "model": "membres.groupe",
+      "pk": 2,
+      "fields": {
+        "nom": "Groupe 3 : CNTS",
+        "description": "",
+        "date_creation": "2026-11-03T06:38:14.784Z"
+      }
+    }
+  ],
+  "postes": [
+    {
+      "model": "membres.poste",
+      "pk": 5,
+      "fields": {
+        "nom": "Chef du groupe 2"
+      }
+    },
+    {
+      "model": "membres.poste",
+      "pk": 4,
+      "fields": {
+        "nom": "Membre simple"
+      }
+    },
+    {
+      "model": "membres.poste",
+      "pk": 1,
+      "fields": {
+        "nom": "Pr\u00e9sident"
+      }
+    },
+    {
+      "model": "membres.poste",
+      "pk": 2,
+      "fields": {
+        "nom": "Secr\u00e9taire G\u00e9n\u00e9rale"
+      }
+    },
+    {
+      "model": "membres.poste",
+      "pk": 3,
+      "fields": {
+        "nom": "Secr\u00e9taire G\u00e9n\u00e9rale Adjoint"
+      }
+    }
+  ],
+  "reunions": [
+    {
+      "model": "membres.reunion",
+      "pk": 3,
+      "fields": {
+        "titre": "R\u00e9union bimensuelle",
+        "date_reunion": "2027-01-10T15:00:00Z",
+        "lieu": "Maquis Bassamoise",
+        "groupe": 2,
+        "description": "",
+        "date_creation": "2026-11-11T19:34:04.752Z"
+      }
+    },
+    {
+      "model": "membres.reunion",
+      "pk": 1,
+      "fields": {
+        "titre": "R\u00e9union bimensuelle",
+        "date_reunion": "2026-12-15T15:00:00Z",
+        "lieu": "Maquis 100 bruits Daloa",
+        "groupe": 2,
+        "description": "",
+        "date_creation": "2026-11-03T17:14:35.827Z"
+      }
+    },
+    {
+      "model": "membres.reunion",
+      "pk": 2,
+      "fields": {
+        "titre": "R\u00e9union bimensuelle",
+        "date_reunion": "2026-10-10T15:00:00Z",
+        "lieu": "Maquis Les Capitales Daloa",
+        "groupe": 4,
+        "description": "",
+        "date_creation": "2026-11-04T18:04:49.730Z"
+      }
+    }
+  ],
+  "profils_acces": [
+    {
+      "model": "membres.profilacces",
+      "pk": 1,
+      "fields": {
+        "utilisateur": 4,
+        "acces_membres": true,
+        "acces_cotisations": false,
+        "acces_depenses": true,
+        "acces_reunions": true,
+        "acces_groupes": false,
+        "acces_postes": false,
+        "acces_parametres": false
+      }
+    },
+    {
+      "model": "membres.profilacces",
+      "pk": 2,
+      "fields": {
+        "utilisateur": 3,
+        "acces_membres": false,
+        "acces_cotisations": false,
+        "acces_depenses": false,
+        "acces_reunions": false,
+        "acces_groupes": false,
+        "acces_postes": false,
+        "acces_parametres": false
+      }
+    }
+  ],
+  "cotisations": [
+    {
+      "model": "cotisations.cotisation",
+      "pk": 133,
+      "fields": {
+        "membre": 4,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 4,
+        "annee": 2027,
+        "nombre_mois": null,
+        "date_echeance": "2027-04-30",
+        "date_paiement": "2026-11-03",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-03T17:52:53.396Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 132,
+      "fields": {
+        "membre": 4,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 3,
+        "annee": 2027,
+        "nombre_mois": null,
+        "date_echeance": "2027-03-31",
+        "date_paiement": "2026-11-03",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-03T17:52:53.287Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 131,
+      "fields": {
+        "membre": 4,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 2,
+        "annee": 2027,
+        "nombre_mois": null,
+        "date_echeance": "2027-02-28",
+        "date_paiement": "2026-11-03",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-03T17:52:53.177Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 212,
+      "fields": {
+        "membre": 10,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 1,
+        "annee": 2027,
+        "nombre_mois": null,
+        "date_echeance": "2027-01-31",
+        "date_paiement": "2026-07-02",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-11T19:20:16.173Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 130,
+      "fields": {
+        "membre": 4,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 1,
+        "annee": 2027,
+        "nombre_mois": null,
+        "date_echeance": "2027-01-31",
+        "date_paiement": "2026-11-03",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-03T17:52:53.082Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 211,
+      "fields": {
+        "membre": 10,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 12,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-12-31",
+        "date_paiement": "2026-07-02",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-11T19:20:16.063Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 129,
+      "fields": {
+        "membre": 4,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 12,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-12-31",
+        "date_paiement": "2026-11-03",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-03T17:52:52.972Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 210,
+      "fields": {
+        "membre": 10,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 11,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-30",
+        "date_paiement": "2026-07-02",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-11T19:20:15.911Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 128,
+      "fields": {
+        "membre": 4,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 11,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-30",
+        "date_paiement": "2026-11-03",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-03T17:52:52.852Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 209,
+      "fields": {
+        "membre": 10,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 10,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-10-31",
+        "date_paiement": "2026-07-02",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-11T19:20:15.788Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 169,
+      "fields": {
+        "membre": 6,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 8,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-08-31",
+        "date_paiement": "2026-05-10",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T17:45:46.017Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 202,
+      "fields": {
+        "membre": 7,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 7,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-07-31",
+        "date_paiement": "2026-08-20",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-07T06:43:20.259Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 168,
+      "fields": {
+        "membre": 6,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 7,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-07-31",
+        "date_paiement": "2026-05-10",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T17:45:45.899Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 201,
+      "fields": {
+        "membre": 7,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 6,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-06-30",
+        "date_paiement": "2026-08-20",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-07T06:39:46.960Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 167,
+      "fields": {
+        "membre": 6,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 6,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-06-30",
+        "date_paiement": "2026-05-10",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T17:45:45.755Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 192,
+      "fields": {
+        "membre": 7,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 5,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-05-31",
+        "date_paiement": "2026-03-11",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T21:19:06.226Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 166,
+      "fields": {
+        "membre": 6,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 5,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-05-31",
+        "date_paiement": "2026-05-10",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T17:45:45.653Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 204,
+      "fields": {
+        "membre": 9,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 4,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-04-30",
+        "date_paiement": "2026-03-11",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-08T00:13:16.073Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 191,
+      "fields": {
+        "membre": 7,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 4,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-04-30",
+        "date_paiement": "2026-03-11",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T21:19:06.110Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 165,
+      "fields": {
+        "membre": 6,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 4,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-04-30",
+        "date_paiement": "2026-05-10",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T17:45:45.522Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 203,
+      "fields": {
+        "membre": 9,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 3,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-03-31",
+        "date_paiement": "2026-03-11",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-08T00:13:15.964Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 190,
+      "fields": {
+        "membre": 7,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 3,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-03-31",
+        "date_paiement": "2026-03-11",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T21:19:05.998Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 160,
+      "fields": {
+        "membre": 6,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 3,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-03-31",
+        "date_paiement": "2026-02-05",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T17:26:44.518Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 189,
+      "fields": {
+        "membre": 7,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 2,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-02-28",
+        "date_paiement": "2026-03-11",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T21:19:05.914Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 159,
+      "fields": {
+        "membre": 6,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 2,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-02-28",
+        "date_paiement": "2026-02-05",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T17:26:44.359Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 158,
+      "fields": {
+        "membre": 6,
+        "type_cotisation": "mensuelle",
+        "montant": "1000.00",
+        "mois": 1,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-01-31",
+        "date_paiement": "2026-02-05",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T17:26:44.270Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 216,
+      "fields": {
+        "membre": 7,
+        "type_cotisation": "exceptionnelle",
+        "montant": "10000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-11",
+        "date_paiement": null,
+        "statut": "en_attente",
+        "libelle": "Transport",
+        "observation": "",
+        "date_creation": "2026-11-11T19:23:31.309Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 215,
+      "fields": {
+        "membre": 10,
+        "type_cotisation": "exceptionnelle",
+        "montant": "10000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-11",
+        "date_paiement": null,
+        "statut": "en_attente",
+        "libelle": "Transport",
+        "observation": "",
+        "date_creation": "2026-11-11T19:23:31.195Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 214,
+      "fields": {
+        "membre": 9,
+        "type_cotisation": "exceptionnelle",
+        "montant": "10000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-11",
+        "date_paiement": "2026-11-11",
+        "statut": "payee",
+        "libelle": "Transport",
+        "observation": "",
+        "date_creation": "2026-11-11T19:23:31.080Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 213,
+      "fields": {
+        "membre": 8,
+        "type_cotisation": "exceptionnelle",
+        "montant": "10000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-11",
+        "date_paiement": "2026-11-11",
+        "statut": "payee",
+        "libelle": "Transport",
+        "observation": "",
+        "date_creation": "2026-11-11T19:23:30.914Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 208,
+      "fields": {
+        "membre": 10,
+        "type_cotisation": "adhesion",
+        "montant": "5000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-11",
+        "date_paiement": "2026-05-10",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-11T19:18:19.601Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 197,
+      "fields": {
+        "membre": 7,
+        "type_cotisation": "exceptionnelle",
+        "montant": "3000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-04",
+        "date_paiement": "2026-11-04",
+        "statut": "payee",
+        "libelle": "Mariage",
+        "observation": "",
+        "date_creation": "2026-11-04T21:34:11.782Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 196,
+      "fields": {
+        "membre": 4,
+        "type_cotisation": "exceptionnelle",
+        "montant": "3000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-04",
+        "date_paiement": "2026-11-11",
+        "statut": "payee",
+        "libelle": "Mariage",
+        "observation": "",
+        "date_creation": "2026-11-04T21:34:11.658Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 188,
+      "fields": {
+        "membre": 7,
+        "type_cotisation": "adhesion",
+        "montant": "5000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-04",
+        "date_paiement": "2026-02-01",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T21:15:37.657Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 181,
+      "fields": {
+        "membre": 6,
+        "type_cotisation": "exceptionnelle",
+        "montant": "10000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-04",
+        "date_paiement": "2026-11-06",
+        "statut": "payee",
+        "libelle": "Transport",
+        "observation": "",
+        "date_creation": "2026-11-04T20:05:54.662Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 180,
+      "fields": {
+        "membre": 7,
+        "type_cotisation": "exceptionnelle",
+        "montant": "5000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-04",
+        "date_paiement": "2026-11-04",
+        "statut": "payee",
+        "libelle": "Soutien Gnamessou",
+        "observation": "",
+        "date_creation": "2026-11-04T19:55:32.579Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 179,
+      "fields": {
+        "membre": 4,
+        "type_cotisation": "exceptionnelle",
+        "montant": "5000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-04",
+        "date_paiement": "2026-11-04",
+        "statut": "payee",
+        "libelle": "Soutien Gnamessou",
+        "observation": "",
+        "date_creation": "2026-11-04T19:55:32.435Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 157,
+      "fields": {
+        "membre": 6,
+        "type_cotisation": "adhesion",
+        "montant": "5000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-04",
+        "date_paiement": "2026-02-05",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T17:26:05.161Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 138,
+      "fields": {
+        "membre": 4,
+        "type_cotisation": "exceptionnelle",
+        "montant": "10000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-04",
+        "date_paiement": "2026-11-04",
+        "statut": "payee",
+        "libelle": "Transport",
+        "observation": "",
+        "date_creation": "2026-11-04T06:52:41.518Z"
+      }
+    },
+    {
+      "model": "cotisations.cotisation",
+      "pk": 137,
+      "fields": {
+        "membre": 4,
+        "type_cotisation": "adhesion",
+        "montant": "5000.00",
+        "mois": null,
+        "annee": 2026,
+        "nombre_mois": null,
+        "date_echeance": "2026-11-04",
+        "date_paiement": "2026-11-03",
+        "statut": "payee",
+        "libelle": "",
+        "observation": "",
+        "date_creation": "2026-11-04T06:47:28.406Z"
+      }
+    }
+  ],
+  "parametres": [
+    {
+      "model": "cotisations.parametre",
+      "pk": 1,
+      "fields": {
+        "logo": "logos/logo_XV1XF3Z.png",
+        "nom_association": "ASSOCIATION DES BIOLOGISTES HAUT SASSANDRA",
+        "base_calcul_date": "derniere_reunion",
+        "nombre_mois_tolerance": 4,
+        "montant_cotisation_mensuelle": "1000.00"
+      }
+    }
+  ],
+  "depenses": [
+    {
+      "model": "depenses.depense",
+      "pk": 1,
+      "fields": {
+        "libelle": "Soutien Gnamessou",
+        "montant": "20000.00",
+        "date_depense": "2026-11-07",
+        "categorie": "soutien",
+        "description": "",
+        "membre": 6,
+        "date_creation": "2026-11-07T05:11:31.534Z"
+      }
+    },
+    {
+      "model": "depenses.depense",
+      "pk": 3,
+      "fields": {
+        "libelle": "Payement des membres qui ont des v\u00e9hicules",
+        "montant": "25000.00",
+        "date_depense": "2026-09-01",
+        "categorie": "transport",
+        "description": "",
+        "membre": null,
+        "date_creation": "2026-11-11T19:29:42.829Z"
+      }
+    }
+  ]
+}

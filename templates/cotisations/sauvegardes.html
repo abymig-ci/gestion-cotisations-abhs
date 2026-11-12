@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Sauvegardes{% endblock %}
+{% block page_title %}Sauvegardes de la base de données{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <form method="post" action="{% url 'creer_sauvegarde' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-hdd"></i> Créer une sauvegarde maintenant
+            </button>
+        </form>
+    </div>
+</div>
+
+<h5 class="mb-3">Sauvegardes existantes (maximum 7)</h5>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-primary">
+                <tr>
+                    <th>Nom</th>
+                    <th>Créée le (UTC)</th>
+                    <th>Taille</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sauvegardes %}
+                <tr>
+                    <td>{{ s.nom_fichier }}</td>
+                    <td>{{ s.date_creation|date:"Y-m-d H:i" }}</td>
+                    <td>{{ s.taille|filesizeformat }}</td>
+                    <td class="text-end">
+                        <!-- LIEN DE TÉLÉCHARGEMENT CORRIGÉ -->
+                        <a href="{% url 'telecharger_sauvegarde' s.pk %}" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-download"></i> Télécharger
+                        </a>
+                        <a href="{% url 'supprimer_sauvegarde' s.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> Supprimer
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">Aucune sauvegarde pour le moment.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

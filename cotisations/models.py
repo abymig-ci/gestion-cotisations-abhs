@@ -30,7 +30,6 @@ class Cotisation(models.Model):
     mois = models.IntegerField(choices=MOIS_CHOICES, null=True, blank=True)
     annee = models.IntegerField(default=timezone.now().year)
     
-    # Le champ nombre_mois est bien à l'intérieur de la classe
     nombre_mois = models.IntegerField(
         null=True, 
         blank=True, 
@@ -62,7 +61,43 @@ class Cotisation(models.Model):
             return f"{self.membre} - {self.get_mois_display()} {self.annee} - {self.montant} FCFA"
         return f"{self.membre} - {self.libelle} - {self.montant} FCFA"
 
+
 class Parametre(models.Model):
+    # 1. Choix du logo
+    logo = models.ImageField(
+        upload_to='logos/', 
+        blank=True, 
+        null=True, 
+        verbose_name="Logo de l'association"
+    )
+    
+    # 2. Choix du nom de l'Association
+    nom_association = models.CharField(
+        max_length=200, 
+        default="ASSOCIATION DES BIOLOGISTES HAUT SASSANDRA",
+        verbose_name="Nom de l'association"
+    )
+    
+    # 3. Liste déroulante pour la date de référence
+    DATE_REFERENCE_CHOICES = [
+        ('date_actuelle', "Date actuelle"),
+        ('derniere_reunion', "Date de la dernière réunion"),
+    ]
+    base_calcul_date = models.CharField(
+        max_length=50,
+        choices=DATE_REFERENCE_CHOICES,
+        default='derniere_reunion',
+        verbose_name="Base de calcul pour être à jour"
+    )
+    
+    # 4. Nombre de mois avant cette date
+    nombre_mois_tolerance = models.IntegerField(
+        default=4,
+        verbose_name="Nombre de mois de tolérance avant la date de référence",
+        help_text="Un membre est à jour s'il a payé jusqu'à X mois avant la date de référence."
+    )
+    
+    # 5. Montant fixé pour la cotisation mensuelle
     montant_cotisation_mensuelle = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
@@ -75,4 +110,19 @@ class Parametre(models.Model):
         verbose_name_plural = "Paramètres"
 
     def __str__(self):
-        return f"Cotisation mensuelle : {self.montant_cotisation_mensuelle} FCFA"
+        return f"Paramètres de {self.nom_association}"
+
+
+# --- NOUVEAU MODÈLE POUR LES SAUVEGARDES ---
+class Sauvegarde(models.Model):
+    nom_fichier = models.CharField(max_length=255)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    taille = models.IntegerField(help_text="Taille en octets")
+
+    class Meta:
+        ordering = ['-date_creation']
+        verbose_name = "Sauvegarde"
+        verbose_name_plural = "Sauvegardes"
+
+    def __str__(self):
+        return self.nom_fichier

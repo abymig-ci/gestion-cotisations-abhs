@@ -44,7 +44,17 @@ class CotisationForm(forms.ModelForm):
 class ParametreForm(forms.ModelForm):
     class Meta:
         model = Parametre
-        fields = ['montant_cotisation_mensuelle']
+        fields = [
+            'logo', 
+            'nom_association', 
+            'base_calcul_date', 
+            'nombre_mois_tolerance', 
+            'montant_cotisation_mensuelle'
+        ]
         widgets = {
+            'logo': forms.FileInput(attrs={'class': 'form-control'}),
+            'nom_association': forms.TextInput(attrs={'class': 'form-control'}),
+            'base_calcul_date': forms.Select(attrs={'class': 'form-select'}),
+            'nombre_mois_tolerance': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'montant_cotisation_mensuelle': forms.NumberInput(attrs={'class': 'form-control'}),
         }

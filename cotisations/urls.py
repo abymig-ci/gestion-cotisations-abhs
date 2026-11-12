@@ -14,11 +14,14 @@ urlpatterns = [
     
     # URLs pour les motifs exceptionnels
     path('motifs-exceptionnels/', views.liste_motifs_exceptionnels, name='liste_motifs_exceptionnels'),
-    
-    # Les URLs avec "pdf/" DOIVENT ÊTRE AVANT celles avec <str:libelle>
     path('motifs-exceptionnels/pdf/', views.liste_motifs_exceptionnels_pdf, name='liste_motifs_exceptionnels_pdf'),
     path('motifs-exceptionnels/<str:libelle>/pdf/', views.detail_motif_exceptionnel_pdf, name='detail_motif_exceptionnel_pdf'),
-    
-    # URL de détail (doit être en dernier)
     path('motifs-exceptionnels/<str:libelle>/', views.detail_motif_exceptionnel, name='detail_motif_exceptionnel'),
+    
+    # URLs pour les sauvegardes
+    path('sauvegardes/', views.liste_sauvegardes, name='liste_sauvegardes'),
+    path('sauvegardes/creer/', views.creer_sauvegarde, name='creer_sauvegarde'),
+    path('sauvegardes/<int:pk>/supprimer/', views.supprimer_sauvegarde, name='supprimer_sauvegarde'),
+    # AJOUT DE L'URL DE TÉLÉCHARGEMENT
+    path('sauvegardes/<int:pk>/telecharger/', views.telecharger_sauvegarde, name='telecharger_sauvegarde'),
 ]

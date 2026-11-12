@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Gestion Cotisations{% endblock %} | A.B H.S</title>
+    <title>{% block title %}Gestion Cotisations{% endblock %} | {{ parametre_global.nom_association|default:"A.B H.S" }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -14,17 +14,28 @@
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="{% static 'img/logo.png' %}" alt="Logo A.B H.S">
-            <h5>ASSOCIATION DES<br>BIOLOGISTES</h5>
+            <!-- LOGO DYNAMIQUE -->
+            {% if parametre_global and parametre_global.logo %}
+                <img src="{{ parametre_global.logo.url }}" alt="Logo">
+            {% else %}
+                <img src="{% static 'img/logo.png' %}" alt="Logo A.B H.S">
+            {% endif %}
+            
+            <!-- NOM DE L'ASSOCIATION DYNAMIQUE -->
+            <h5>
+                {% if parametre_global and parametre_global.nom_association %}
+                    {{ parametre_global.nom_association }}
+                {% else %}
+                    ASSOCIATION DES<br>BIOLOGISTES
+                {% endif %}
+            </h5>
         </div>
         <ul class="sidebar-menu">
             {% if user.is_superuser %}
                 <!-- MENU ADMINISTRATEUR -->
                 <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-grid-1x2-fill"></i> Tableau de bord</a></li>
                 <li><a href="{% url 'liste_cotisations' %}" class="{% if 'cotisation' in request.resolver_match.url_name and 'motif' not in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Cotisations</a></li>
-                <!-- LIEN MOTIFS EXCEPTIONNELS -->
                 <li><a href="{% url 'liste_motifs_exceptionnels' %}" class="{% if 'motif' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-megaphone-fill"></i> Motifs Exceptionnels</a></li>
-                
                 <li><a href="{% url 'liste_depenses' %}" class="{% if 'depense' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cart-dash-fill"></i> Dépenses</a></li>
                 <li><a href="{% url 'liste_membres' %}" class="{% if 'membre' in request.resolver_match.url_name and 'mon_espace' not in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-people-fill"></i> Membres</a></li>
                 <li><a href="{% url 'liste_reunions' %}" class="{% if 'reunion' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-calendar-event-fill"></i> Réunions</a></li>
@@ -32,6 +43,8 @@
                 <li><a href="{% url 'liste_postes' %}" class="{% if 'poste' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-person-badge-fill"></i> Postes</a></li>
                 <li><a href="{% url 'parametres' %}" class="{% if 'parametre' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-gear-fill"></i> Paramètres</a></li>
                 <li><a href="{% url 'gerer_acces_utilisateurs' %}" class="{% if 'acces' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-shield-lock-fill"></i> Gérer les accès</a></li>
+                <!-- LIEN SAUVEGARDES AJOUTÉ ICI -->
+                <li><a href="{% url 'liste_sauvegardes' %}" class="{% if 'sauvegarde' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-hdd-fill"></i> Sauvegardes</a></li>
                 <li><a href="/admin/"><i class="bi bi-tools"></i> Administration Django</a></li>
             {% else %}
                 <!-- MENU POUR TOUS LES MEMBRES -->
@@ -45,7 +58,6 @@
                     {% if user.profil_acces.acces_cotisations %}
                         <li class="mt-3 text-muted small text-uppercase px-3">Trésorerie</li>
                         <li><a href="{% url 'liste_cotisations' %}" class="{% if 'cotisation' in request.resolver_match.url_name and 'motif' not in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Gérer les cotisations</a></li>
-                        <!-- LIEN MOTIFS EXCEPTIONNELS POUR LES TRÉSORIERS -->
                         <li><a href="{% url 'liste_motifs_exceptionnels' %}" class="{% if 'motif' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-megaphone-fill"></i> Motifs Exceptionnels</a></li>
                     {% endif %}
                     
@@ -76,6 +88,8 @@
                     {% if user.profil_acces.acces_parametres %}
                         <li class="mt-3 text-muted small text-uppercase px-3">Système</li>
                         <li><a href="{% url 'parametres' %}" class="{% if 'parametre' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-gear-fill"></i> Paramètres</a></li>
+                        <!-- LIEN SAUVEGARDES POUR LES UTILISATEURS AYANT L'ACCÈS PARAMÈTRES -->
+                        <li><a href="{% url 'liste_sauvegardes' %}" class="{% if 'sauvegarde' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-hdd-fill"></i> Sauvegardes</a></li>
                     {% endif %}
                 {% endif %}
             {% endif %}

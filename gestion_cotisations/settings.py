@@ -67,6 +67,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # AJOUT DU CONTEXT PROCESSOR POUR LES PARAMÈTRES GLOBAUX
+                'cotisations.context_processors.parametres_globaux',
             ],
         },
     },
@@ -124,6 +126,11 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles' # Utile pour le déploiement Render
+
+
+# Media files (Uploads : logo, etc.)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Email

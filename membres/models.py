@@ -60,7 +60,6 @@ class Membre(models.Model):
         ('suspendu', 'Suspendu'),
     ]
     
-    # Lien vers le compte utilisateur
     utilisateur = models.OneToOneField(
         User, 
         on_delete=models.SET_NULL, 
@@ -70,7 +69,6 @@ class Membre(models.Model):
         verbose_name="Compte utilisateur lié"
     )
     
-    # Champs pour l'invitation
     invitation_token = models.CharField(max_length=100, blank=True, null=True, unique=True)
     invitation_date = models.DateTimeField(blank=True, null=True)
     
@@ -119,6 +117,9 @@ class Membre(models.Model):
 
     @property
     def statut_cotisation(self):
+        # Import local pour éviter les problèmes d'import circulaire
+        from cotisations.models import Parametre
+        
         aujourd_hui = timezone.now().date()
         
         if self.statut == 'inactif':
@@ -134,35 +135,49 @@ class Membre(models.Model):
         if self.cotisations.filter(type_cotisation='exceptionnelle', statut='en_attente').exists():
             return "En retard"
 
-        # 3. Cotisations mensuelles par rapport à la dernière réunion passée
-        derniere_reunion = Reunion.objects.filter(date_reunion__lte=timezone.now()).order_by('-date_reunion').first()
-        
-        if derniere_reunion:
-            date_reunion = derniere_reunion.date_reunion.date()
-            date_limite = date_reunion - relativedelta(months=4)
-            
-            derniere_cot = self.cotisations.filter(
-                type_cotisation='mensuelle',
-                statut='payee'
-            ).order_by('-annee', '-mois').first()
+        # 3. Récupération des paramètres
+        try:
+            parametres = Parametre.objects.first()
+        except Exception:
+            parametres = None
 
-            if derniere_cot:
-                date_paiement = date(derniere_cot.annee, derniere_cot.mois, 1)
-                if date_paiement < date_limite:
-                    return "En retard"
+        if parametres:
+            base_calcul = parametres.base_calcul_date
+            mois_tolerance = parametres.nombre_mois_tolerance
+        else:
+            # Valeurs par défaut si les paramètres n'existent pas
+            base_calcul = 'derniere_reunion'
+            mois_tolerance = 4
+
+        # 4. Définition de la date de référence
+        if base_calcul == 'derniere_reunion':
+            derniere_reunion = Reunion.objects.filter(date_reunion__lte=timezone.now()).order_by('-date_reunion').first()
+            if derniere_reunion:
+                date_reference = derniere_reunion.date_reunion.date()
             else:
+                date_reference = aujourd_hui
+        else:
+            date_reference = aujourd_hui
+
+        # 5. Calcul de la date limite
+        date_limite = date_reference - relativedelta(months=mois_tolerance)
+
+        # 6. Comparaison avec la dernière cotisation payée
+        derniere_cot = self.cotisations.filter(
+            type_cotisation='mensuelle',
+            statut='payee'
+        ).order_by('-annee', '-mois').first()
+
+        if derniere_cot:
+            date_paiement = date(derniere_cot.annee, derniere_cot.mois, 1)
+            if date_paiement < date_limite:
                 return "En retard"
         else:
-            derniere_cot = self.cotisations.filter(type_cotisation='mensuelle', statut='payee').order_by('-annee', '-mois').first()
-            if derniere_cot:
-                mois_paiement_absolu = derniere_cot.annee * 12 + derniere_cot.mois
-                mois_actuel_absolu = aujourd_hui.year * 12 + aujourd_hui.month
-                if mois_paiement_absolu < (mois_actuel_absolu - 1):
-                    return "En retard"
-            else:
-                return "En retard"
+            # S'il n'a jamais payé, on vérifie s'il a dépassé sa période de carence
+            return "En retard"
 
         return "À jour"
+
 
 class ProfilAcces(models.Model):
     utilisateur = models.OneToOneField(
@@ -172,7 +187,6 @@ class ProfilAcces(models.Model):
         verbose_name="Utilisateur"
     )
     
-    # Les cases à cocher
     acces_membres = models.BooleanField(default=False, verbose_name="Accès à la gestion des membres")
     acces_cotisations = models.BooleanField(default=False, verbose_name="Accès à la gestion des cotisations")
     acces_depenses = models.BooleanField(default=False, verbose_name="Accès à la gestion des dépenses")
