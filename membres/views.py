@@ -8,11 +8,34 @@ from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
-import random
-import string
+from django.http import HttpResponse
+from weasyprint import HTML
+from django.template.loader import render_to_string
+import base64
+import os
+from django.conf import settings
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
 from .models import Membre, Groupe, Poste, Reunion, ProfilAcces
 from .forms import MembreForm, GroupeForm, PosteForm, ReunionForm
+
+
+# --- FONCTION POUR LE LOGO EN BASE64 ---
+def get_logo_base64():
+    try:
+        from cotisations.models import Parametre
+        parametre = Parametre.objects.first()
+        if parametre and parametre.logo:
+            logo_path = parametre.logo.path
+        else:
+            logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'logo.png')
+            
+        with open(logo_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+            return f"data:image/png;base64,{encoded_string}"
+    except (FileNotFoundError, ValueError):
+        return ""
 
 
 # --- DÉCORATEURS DE SÉCURITÉ ---
@@ -26,7 +49,6 @@ def admin_required(view_func):
 
 
 def has_acces(user, acces_name):
-    """Vérifie si l'utilisateur a un accès spécifique, ou s'il est admin."""
     if user.is_superuser:
         return True
     try:
@@ -37,7 +59,6 @@ def has_acces(user, acces_name):
 
 
 def check_acces(acces_name):
-    """Décorateur pour vérifier un accès spécifique."""
     def decorator(view_func):
         @login_required
         def _wrapped_view(request, *args, **kwargs):
@@ -119,10 +140,62 @@ def detail_membre(request, pk):
     )
     total = total_agg.get('total', 0) or 0
 
+    # --- CALCUL DES MONTANTS DÛS ---
+    montant_du = 0
+    montant_assiste = 0
+    from cotisations.models import Parametre
+    
+    parametre = Parametre.objects.first()
+    montant_standard = parametre.montant_cotisation_mensuelle if parametre else 5000
+    base_calcul = parametre.base_calcul_date if parametre else 'derniere_reunion'
+    mois_tolerance = parametre.nombre_mois_tolerance if parametre else 4
+    
+    # 1. Cotisations en attente
+    montant_du += cotisations.filter(statut='en_attente').aggregate(
+        total=Sum('montant')
+    )['total'] or 0
+    
+    # 2. Mois de retard non enregistrés
+    if membre.statut == 'actif' and membre.statut_cotisation != "En carence":
+        if base_calcul == 'derniere_reunion':
+            derniere_reunion = Reunion.objects.filter(date_reunion__lte=timezone.now()).order_by('-date_reunion').first()
+            if derniere_reunion:
+                date_reference = derniere_reunion.date_reunion.date()
+            else:
+                date_reference = timezone.now().date()
+        else:
+            date_reference = timezone.now().date()
+            
+        date_limite = date_reference - relativedelta(months=mois_tolerance)
+        
+        derniere_cot = cotisations.filter(
+            type_cotisation='mensuelle', statut='payee'
+        ).order_by('-annee', '-mois').first()
+        
+        if derniere_cot:
+            date_debut = date(derniere_cot.annee, derniere_cot.mois, 1) + relativedelta(months=1)
+        else:
+            date_debut = date(membre.date_adhesion.year, membre.date_adhesion.month, 1)
+        
+        today = timezone.now().date()
+        date_fin = date(today.year, today.month, 1)
+        
+        if date_debut <= date_fin:
+            nb_mois = (date_fin.year - date_debut.year) * 12 + (date_fin.month - date_debut.month) + 1
+            for i in range(nb_mois):
+                mois_courant = date_debut + relativedelta(months=i)
+                if not cotisations.filter(type_cotisation='mensuelle', annee=mois_courant.year, mois=mois_courant.month).exists():
+                    montant_du += montant_standard
+                    if mois_courant <= date_limite:
+                        montant_assiste += montant_standard
+    # -----------------------------
+
     return render(request, 'membres/detail.html', {
         'membre': membre,
         'cotisations': cotisations,
         'total': total,
+        'montant_du': montant_du,
+        'montant_assiste': montant_assiste,
         'today': timezone.now().date(),
     })
 
@@ -275,10 +348,65 @@ def mon_espace(request):
     cotisations = membre.cotisations.all()
     total = cotisations.filter(statut='payee').aggregate(Sum('montant'))['montant__sum'] or 0
     
+    # --- CALCUL DES MONTANTS DÛS ---
+    montant_du = 0
+    montant_assiste = 0
+    
+    from cotisations.models import Parametre
+    
+    parametre = Parametre.objects.first()
+    montant_standard = parametre.montant_cotisation_mensuelle if parametre else 5000
+    base_calcul = parametre.base_calcul_date if parametre else 'derniere_reunion'
+    mois_tolerance = parametre.nombre_mois_tolerance if parametre else 4
+    
+    # 1. Cotisations en attente (inclut exceptionnelles et mensuelles)
+    montant_en_attente = cotisations.filter(statut='en_attente').aggregate(
+        total=Sum('montant')
+    )['total'] or 0
+    montant_du += montant_en_attente
+    montant_assiste += montant_en_attente  # <-- On ajoute ce montant au calcul "assisté"
+    
+    # 2. Mois de retard non enregistrés
+    if membre.statut == 'actif' and membre.statut_cotisation != "En carence":
+        if base_calcul == 'derniere_reunion':
+            derniere_reunion = Reunion.objects.filter(date_reunion__lte=timezone.now()).order_by('-date_reunion').first()
+            if derniere_reunion:
+                date_reference = derniere_reunion.date_reunion.date()
+            else:
+                date_reference = timezone.now().date()
+        else:
+            date_reference = timezone.now().date()
+            
+        date_limite = date_reference - relativedelta(months=mois_tolerance)
+        
+        derniere_cot = cotisations.filter(
+            type_cotisation='mensuelle', statut='payee'
+        ).order_by('-annee', '-mois').first()
+        
+        if derniere_cot:
+            date_debut = date(derniere_cot.annee, derniere_cot.mois, 1) + relativedelta(months=1)
+        else:
+            date_debut = date(membre.date_adhesion.year, membre.date_adhesion.month, 1)
+        
+        today = timezone.now().date()
+        date_fin = date(today.year, today.month, 1)
+        
+        if date_debut <= date_fin:
+            nb_mois = (date_fin.year - date_debut.year) * 12 + (date_fin.month - date_debut.month) + 1
+            for i in range(nb_mois):
+                mois_courant = date_debut + relativedelta(months=i)
+                if not cotisations.filter(type_cotisation='mensuelle', annee=mois_courant.year, mois=mois_courant.month).exists():
+                    montant_du += montant_standard
+                    if mois_courant <= date_limite:
+                        montant_assiste += montant_standard
+    # -----------------------------
+
     return render(request, 'membres/mon_espace.html', {
         'membre': membre,
         'cotisations': cotisations,
         'total': total,
+        'montant_du': montant_du,
+        'montant_assiste': montant_assiste,
         'today': timezone.now().date()
     })
 
@@ -334,6 +462,7 @@ def modifier_acces_utilisateur(request, user_id):
         profil.acces_groupes = request.POST.get('acces_groupes') == 'on'
         profil.acces_postes = request.POST.get('acces_postes') == 'on'
         profil.acces_parametres = request.POST.get('acces_parametres') == 'on'
+        profil.acces_sauvegardes = request.POST.get('acces_sauvegardes') == 'on'
         profil.save()
         
         messages.success(request, f"Accès de {user.username} mis à jour.")
@@ -434,15 +563,10 @@ def definir_mot_de_passe(request, token):
 
     return render(request, 'membres/definir_mot_de_passe.html', {'token': token})
 
-from django.http import HttpResponse
-from weasyprint import HTML
-from django.template.loader import render_to_string
 
 @admin_required
 def etat_cotisations_pdf(request):
-    # On récupère tous les groupes
     groupes = Groupe.objects.all().order_by('nom')
-    
     etat_par_groupe = []
     
     for groupe in groupes:
@@ -478,7 +602,6 @@ def etat_cotisations_pdf(request):
                 'total_groupe': sum(m['total_paye'] for m in liste_membres)
             })
     
-    # Membres sans groupe
     membres_sans_groupe = Membre.objects.filter(statut='actif', groupe__isnull=True).select_related('poste').order_by('nom', 'prenom')
     if membres_sans_groupe.exists():
         liste_sans_groupe = []
@@ -498,17 +621,15 @@ def etat_cotisations_pdf(request):
             'total_groupe': sum(m['total_paye'] for m in liste_sans_groupe)
         })
 
-    # Rendu du template en HTML
     html_string = render_to_string('membres/etat_cotisations_pdf.html', {
         'etat_par_groupe': etat_par_groupe,
         'today': timezone.now().date(),
+        'logo_base64': get_logo_base64(),
     })
 
-    # Génération du PDF
     html = HTML(string=html_string)
     pdf = html.write_pdf()
 
-    # Préparation de la réponse HTTP
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = 'inline; filename="etat_cotisations.pdf"'
     

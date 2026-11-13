@@ -20,10 +20,31 @@
                 {% endif %}
             </div>
 
-            <div class="d-flex justify-content-between align-items-center bg-success bg-opacity-10 text-success rounded-3 p-3 mb-4">
-                <span class="fw-bold small text-uppercase">Mon total payé</span>
-                <span class="fw-bold fs-5">{{ total|floatformat:0 }} FCFA</span>
+            <!-- BLOC MONTANT À PAYER / À JOUR -->
+            <div class="d-flex justify-content-between align-items-center {% if montant_du > 0 %}bg-danger bg-opacity-10 text-danger{% else %}bg-success bg-opacity-10 text-success{% endif %} rounded-3 p-3 mb-3">
+                <span class="fw-bold small">
+                    {% if montant_du > 0 %}Montant à payer pour être à jour{% else %}Statut financier{% endif %}
+                </span>
+                <span class="fw-bold fs-5">
+                    {% if montant_du > 0 %}
+                        {{ montant_du|floatformat:0 }} FCFA
+                    {% else %}
+                        À jour
+                    {% endif %}
+                </span>
             </div>
+
+            <!-- BLOC MONTANT POUR ÊTRE ASSISTÉ(E) -->
+            {% if montant_assiste > 0 %}
+            <div class="d-flex justify-content-between align-items-center bg-warning bg-opacity-10 text-dark rounded-3 p-3 mb-4">
+                <span class="fw-bold small">
+                    Montant à payer pour être assisté(e)
+                </span>
+                <span class="fw-bold fs-5">
+                    {{ montant_assiste|floatformat:0 }} FCFA
+                </span>
+            </div>
+            {% endif %}
 
             <!-- BOUTONS DE NAVIGATION MEMBRE -->
             <div class="d-grid gap-2 border-top pt-3">
@@ -33,7 +54,7 @@
                 <a href="{% url 'membres_en_retard' %}" class="btn btn-outline-danger">
                     <i class="bi bi-exclamation-circle-fill me-1"></i> Liste des membres en retard
                 </a>
-                <!-- NOUVEAU BOUTON DÉPENSES -->
+                <!-- BOUTON DÉPENSES -->
                 <a href="{% url 'liste_depenses_publique' %}" class="btn btn-outline-warning">
                     <i class="bi bi-cart-dash-fill me-1"></i> Voir les dépenses de l'association
                 </a>

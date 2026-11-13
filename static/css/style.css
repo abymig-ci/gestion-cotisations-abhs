@@ -34,7 +34,7 @@ body {
 /* --- LAYOUT AVEC SIDEBAR --- */
 .sidebar {
     width: 260px;
-    background: var(--primary-dark);
+    background: var(--primary); /* <-- CHANGEMENT ICI */
     color: white;
     display: flex;
     flex-direction: column;
@@ -44,7 +44,6 @@ body {
     height: 100vh;
     z-index: 1000;
     transition: var(--transition);
-    /* Suppression du overflow-y et padding-bottom sur le parent */
 }
 
 .sidebar-header {
@@ -69,13 +68,12 @@ body {
     letter-spacing: 1px;
 }
 
-/* UN SEUL BLOC .sidebar-menu, propre */
 .sidebar-menu {
     list-style: none;
     padding: 20px 10px;
     margin: 0;
-    flex: 1; /* Prend tout l'espace disponible */
-    overflow-y: auto; /* Permet le défilement si trop de liens */
+    flex: 1;
+    overflow-y: auto;
 }
 
 .sidebar-menu li a {
@@ -100,12 +98,11 @@ body {
     font-size: 1.2rem;
 }
 
-/* Le footer reste bien collé en bas */
 .sidebar-footer {
     padding: 20px;
     border-top: 1px solid rgba(255,255,255,0.1);
     margin-top: auto;
-    background: var(--primary-dark);
+    background: var(--primary); /* <-- CHANGEMENT ICI AUSSI */
     flex-shrink: 0;
 }
 
@@ -245,10 +242,29 @@ body {
 
 /* Bordures plus foncées pour les champs de connexion */
 .form-control {
-    border: 2px solid #cbd5e1 !important; /* Bordure grise foncée */
+    border: 2px solid #cbd5e1 !important;
 }
 
 .form-control:focus {
-    border-color: var(--primary) !important; /* Devient bleu marine au clic */
-    box-shadow: 0 0 0 0.25rem rgba(10, 28, 92, 0.25) !important; /* Halo bleu au clic */
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(10, 28, 92, 0.25) !important;
+}
+
+/* --- NOUVELLES RÈGLES POUR LES CASES À COCHER --- */
+.form-check-input {
+    border: 2px solid #94a3b8 !important;
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: 0.15em;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(10, 28, 92, 0.25);
+    border-color: var(--primary);
 }

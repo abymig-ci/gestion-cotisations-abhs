@@ -47,6 +47,7 @@ class ParametreForm(forms.ModelForm):
         fields = [
             'logo', 
             'nom_association', 
+            'couleur_principale',  # <-- NOUVEAU CHAMP
             'base_calcul_date', 
             'nombre_mois_tolerance', 
             'montant_cotisation_mensuelle'
@@ -54,6 +55,7 @@ class ParametreForm(forms.ModelForm):
         widgets = {
             'logo': forms.FileInput(attrs={'class': 'form-control'}),
             'nom_association': forms.TextInput(attrs={'class': 'form-control'}),
+            'couleur_principale': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}), # <-- SÉLECTEUR DE COULEUR
             'base_calcul_date': forms.Select(attrs={'class': 'form-select'}),
             'nombre_mois_tolerance': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'montant_cotisation_mensuelle': forms.NumberInput(attrs={'class': 'form-control'}),

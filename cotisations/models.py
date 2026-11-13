@@ -78,7 +78,15 @@ class Parametre(models.Model):
         verbose_name="Nom de l'association"
     )
     
-    # 3. Liste déroulante pour la date de référence
+    # 3. NOUVEAU : Choix de la couleur principale
+    couleur_principale = models.CharField(
+        max_length=7, 
+        default="#0a1c5c", 
+        verbose_name="Couleur principale (format hexadécimal)",
+        help_text="Ex: #0a1c5c pour du bleu marine"
+    )
+    
+    # 4. Liste déroulante pour la date de référence
     DATE_REFERENCE_CHOICES = [
         ('date_actuelle', "Date actuelle"),
         ('derniere_reunion', "Date de la dernière réunion"),
@@ -90,14 +98,14 @@ class Parametre(models.Model):
         verbose_name="Base de calcul pour être à jour"
     )
     
-    # 4. Nombre de mois avant cette date
+    # 5. Nombre de mois avant cette date
     nombre_mois_tolerance = models.IntegerField(
         default=4,
         verbose_name="Nombre de mois de tolérance avant la date de référence",
         help_text="Un membre est à jour s'il a payé jusqu'à X mois avant la date de référence."
     )
     
-    # 5. Montant fixé pour la cotisation mensuelle
+    # 6. Montant fixé pour la cotisation mensuelle
     montant_cotisation_mensuelle = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 

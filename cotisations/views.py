@@ -485,18 +485,17 @@ def detail_motif_exceptionnel_pdf(request, libelle):
     return response
 
 
-# --- VUES POUR LES SAUVEGARDES ---
+# --- VUES POUR LES SAUVEGARDES (PROTÉGÉES PAR ACCES_SAUVEGARDES) ---
 
-@check_acces('acces_parametres')
+@check_acces('acces_sauvegardes')
 def liste_sauvegardes(request):
     sauvegardes = Sauvegarde.objects.all()
     return render(request, 'cotisations/sauvegardes.html', {'sauvegardes': sauvegardes})
 
 
-@check_acces('acces_parametres')
+@check_acces('acces_sauvegardes')
 def creer_sauvegarde(request):
     if request.method == 'POST':
-        # 1. Création de la sauvegarde locale (JSON)
         date_str = datetime.now().strftime('%Y-%m-%d-%H%M')
         nom_fichier = f"sauvegarde-{date_str}.json"
         
@@ -520,14 +519,12 @@ def creer_sauvegarde(request):
         taille = default_storage.size(fichier)
         Sauvegarde.objects.create(nom_fichier=nom_fichier, taille=taille)
         
-        # 2. Création du Snapshot sur Neon via l'API
         neon_api_key = os.environ.get('NEON_API_KEY')
         neon_project_id = os.environ.get('NEON_PROJECT_ID')
         neon_branch_id = os.environ.get('NEON_BRANCH_ID')
 
         if neon_api_key and neon_project_id and neon_branch_id:
             try:
-                # On nettoie l'ID de la branche au cas où il y aurait des espaces
                 neon_branch_id = neon_branch_id.strip()
                 url = f"https://console.neon.tech/api/v2/projects/{neon_project_id}/branches/{neon_branch_id}/snapshot"
                 headers = {
@@ -547,7 +544,6 @@ def creer_sauvegarde(request):
         else:
             messages.info(request, "Sauvegarde locale OK. (API Neon non configurée).")
         
-        # 3. Gestion de la limite de 7 sauvegardes JSON
         sauvegardes = Sauvegarde.objects.all().order_by('-date_creation')
         if sauvegardes.count() > 7:
             for vieille_sauvegarde in sauvegardes[7:]:
@@ -561,31 +557,27 @@ def creer_sauvegarde(request):
     return redirect('liste_sauvegardes')
 
 
-@check_acces('acces_parametres')
+@check_acces('acces_sauvegardes')
 def supprimer_sauvegarde(request, pk):
     sauvegarde = get_object_or_404(Sauvegarde, pk=pk)
     if request.method == 'POST':
-        # Supprimer le fichier physique
         chemin = os.path.join('sauvegardes', sauvegarde.nom_fichier)
         if default_storage.exists(chemin):
             default_storage.delete(chemin)
         
-        # Supprimer l'entrée en base
         sauvegarde.delete()
         messages.success(request, "Sauvegarde supprimée.")
         return redirect('liste_sauvegardes')
     return render(request, 'cotisations/confirmer_suppression_sauvegarde.html', {'sauvegarde': sauvegarde})
 
 
-@check_acces('acces_parametres')
+@check_acces('acces_sauvegardes')
 def telecharger_sauvegarde(request, pk):
     sauvegarde = get_object_or_404(Sauvegarde, pk=pk)
     chemin = os.path.join('sauvegardes', sauvegarde.nom_fichier)
     
     if default_storage.exists(chemin):
-        # On ouvre le fichier
         fichier = default_storage.open(chemin, 'rb')
-        # On le renvoie en téléchargement
         response = FileResponse(fichier, as_attachment=True, filename=sauvegarde.nom_fichier)
         return response
     else:

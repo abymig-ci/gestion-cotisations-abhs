@@ -46,10 +46,17 @@
                     <small class="d-block text-muted">Permet de gérer les postes (Président, etc.).</small>
                 </div>
                 
-                <div class="form-check mb-4">
+                <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" name="acces_parametres" id="acces_parametres" {% if profil.acces_parametres %}checked{% endif %}>
                     <label class="form-check-label fw-bold" for="acces_parametres">Accès aux Paramètres</label>
                     <small class="d-block text-muted">Permet de modifier le montant des cotisations.</small>
+                </div>
+
+                <!-- NOUVELLE CASE À COCHER POUR LES SAUVEGARDES -->
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" name="acces_sauvegardes" id="acces_sauvegardes" {% if profil.acces_sauvegardes %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="acces_sauvegardes">Accès aux Sauvegardes</label>
+                    <small class="d-block text-muted">Permet de créer et gérer les sauvegardes de la base de données.</small>
                 </div>
 
                 <hr class="my-4 border-light">

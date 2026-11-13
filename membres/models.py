@@ -194,6 +194,9 @@ class ProfilAcces(models.Model):
     acces_groupes = models.BooleanField(default=False, verbose_name="Accès à la gestion des groupes")
     acces_postes = models.BooleanField(default=False, verbose_name="Accès à la gestion des postes")
     acces_parametres = models.BooleanField(default=False, verbose_name="Accès aux paramètres")
+    
+    # NOUVEAU CHAMP AJOUTÉ ICI
+    acces_sauvegardes = models.BooleanField(default=False, verbose_name="Accès aux sauvegardes")
 
     class Meta:
         verbose_name = "Profil d'accès"
