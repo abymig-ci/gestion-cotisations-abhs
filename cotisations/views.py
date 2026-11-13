@@ -18,6 +18,7 @@ import os
 import json
 from datetime import datetime
 from django.conf import settings
+import requests
 
 from .models import Cotisation, Parametre, Sauvegarde
 from .forms import CotisationForm, ParametreForm
@@ -495,11 +496,10 @@ def liste_sauvegardes(request):
 @check_acces('acces_parametres')
 def creer_sauvegarde(request):
     if request.method == 'POST':
-        # On génère le nom du fichier
+        # 1. Création de la sauvegarde locale (JSON)
         date_str = datetime.now().strftime('%Y-%m-%d-%H%M')
         nom_fichier = f"sauvegarde-{date_str}.json"
         
-        # On récupère TOUTES les données de la base
         from membres.models import Membre, Groupe, Poste, Reunion, ProfilAcces
         from depenses.models import Depense
         
@@ -514,25 +514,48 @@ def creer_sauvegarde(request):
             'depenses': json.loads(serialize('json', Depense.objects.all())),
         }
         
-        # On enregistre le fichier dans le dossier media
         chemin_fichier = os.path.join('sauvegardes', nom_fichier)
         fichier = default_storage.save(chemin_fichier, ContentFile(json.dumps(data, indent=2).encode('utf-8')))
         
-        # On enregistre l'info dans la base
         taille = default_storage.size(fichier)
         Sauvegarde.objects.create(nom_fichier=nom_fichier, taille=taille)
         
-        # --- GESTION DE LA LIMITE DE 7 SAUVEGARDES ---
+        # 2. Création du Snapshot sur Neon via l'API
+        neon_api_key = os.environ.get('NEON_API_KEY')
+        neon_project_id = os.environ.get('NEON_PROJECT_ID')
+        neon_branch_id = os.environ.get('NEON_BRANCH_ID')
+
+        if neon_api_key and neon_project_id and neon_branch_id:
+            try:
+                # On nettoie l'ID de la branche au cas où il y aurait des espaces
+                neon_branch_id = neon_branch_id.strip()
+                url = f"https://console.neon.tech/api/v2/projects/{neon_project_id}/branches/{neon_branch_id}/snapshot"
+                headers = {
+                    "Authorization": f"Bearer {neon_api_key}",
+                    "Content-Type": "application/json"
+                }
+                params = {"name": f"snapshot-app-{date_str}"}
+                
+                response = requests.post(url, headers=headers, params=params, timeout=15)
+                
+                if response.status_code in [200, 201]:
+                    messages.success(request, f"Sauvegarde locale ET snapshot Neon créés avec succès !")
+                else:
+                    messages.warning(request, f"Sauvegarde locale OK, mais Neon a renvoyé une erreur (Code: {response.status_code}).")
+            except Exception as e:
+                messages.warning(request, f"Sauvegarde locale OK, mais erreur de connexion à Neon : {e}")
+        else:
+            messages.info(request, "Sauvegarde locale OK. (API Neon non configurée).")
+        
+        # 3. Gestion de la limite de 7 sauvegardes JSON
         sauvegardes = Sauvegarde.objects.all().order_by('-date_creation')
         if sauvegardes.count() > 7:
-            # On supprime les plus anciennes
             for vieille_sauvegarde in sauvegardes[7:]:
                 chemin_vieux = os.path.join('sauvegardes', vieille_sauvegarde.nom_fichier)
                 if default_storage.exists(chemin_vieux):
                     default_storage.delete(chemin_vieux)
                 vieille_sauvegarde.delete()
         
-        messages.success(request, f"Sauvegarde '{nom_fichier}' créée avec succès.")
         return redirect('liste_sauvegardes')
     
     return redirect('liste_sauvegardes')
