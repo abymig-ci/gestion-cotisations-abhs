@@ -35,11 +35,20 @@
                     ASSOCIATION DES<br>BIOLOGISTES
                 {% endif %}
             </h5>
+            
+            <!-- BOUTON CHANGER D'ASSOCIATION -->
+            {% if association_active_id %}
+                <a href="{% url 'choisir_association' %}" class="btn btn-sm btn-outline-light mt-2 w-100">
+                    <i class="bi bi-arrow-repeat"></i> Changer d'association
+                </a>
+            {% endif %}
         </div>
         <ul class="sidebar-menu">
             {% if user.is_superuser %}
                 <!-- MENU ADMINISTRATEUR -->
                 <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><i class="bi bi-grid-1x2-fill"></i> Tableau de bord</a></li>
+                <li><a href="{% url 'choisir_association' %}" class="{% if 'choisir_association' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-building"></i> Choisir une association</a></li>
+                
                 <li><a href="{% url 'liste_cotisations' %}" class="{% if 'cotisation' in request.resolver_match.url_name and 'motif' not in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cash-stack"></i> Cotisations</a></li>
                 <li><a href="{% url 'liste_motifs_exceptionnels' %}" class="{% if 'motif' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-megaphone-fill"></i> Motifs Exceptionnels</a></li>
                 <li><a href="{% url 'liste_depenses' %}" class="{% if 'depense' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cart-dash-fill"></i> Dépenses</a></li>

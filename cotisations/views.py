@@ -20,15 +20,21 @@ from datetime import datetime
 from django.conf import settings
 import requests
 
-from .models import Cotisation, Parametre, Sauvegarde
+from .models import Cotisation, Parametre, Sauvegarde, Association
 from .forms import CotisationForm, ParametreForm
 from membres.models import Membre, ProfilAcces
 
 
+# --- HELPERS ---
+def get_assoc_id(request):
+    return request.session.get('association_id')
+
+
 # --- FONCTION POUR LE LOGO EN BASE64 ---
-def get_logo_base64():
+def get_logo_base64(request):
     try:
-        parametre = Parametre.objects.first()
+        # On prend le logo de l'association active
+        parametre = Parametre.objects.filter(association_id=get_assoc_id(request)).first()
         if parametre and parametre.logo:
             logo_path = parametre.logo.path
         else:
@@ -41,7 +47,7 @@ def get_logo_base64():
         return ""
 
 
-# --- DÉCORATEUR POUR LE NOUVEAU SYSTÈME D'ACCÈS ---
+# --- DÉCORATEURS DE SÉCURITÉ ---
 def has_acces(user, acces_name):
     if user.is_superuser:
         return True
@@ -70,7 +76,7 @@ class CotisationExceptionnelleForm(forms.Form):
     ]
     type_cotisation = forms.ChoiceField(choices=TYPE_COTISATION, widget=forms.Select(attrs={'class': 'form-select'}))
     membre_beneficiaire = forms.ModelChoiceField(
-        queryset=Membre.objects.filter(statut='actif'),
+        queryset=Membre.objects.none(),  # Sera rempli dynamiquement
         required=False,
         empty_label="--- Aucun (si collective) ---",
         widget=forms.Select(attrs={'class': 'form-select'})
@@ -85,16 +91,23 @@ class CotisationExceptionnelleForm(forms.Form):
     )
 
 
+# --- DASHBOARD ---
 @login_required
 def dashboard(request):
     today = timezone.now().date()
     annee = today.year
     mois = today.month
+    assoc_id = get_assoc_id(request)
 
-    parametre, _ = Parametre.objects.get_or_create(id=1)
+    # Paramètres de l'association
+    parametre = Parametre.objects.filter(association_id=assoc_id).first()
+    if not parametre:
+        parametre = Parametre.objects.create(association_id=assoc_id, nom_association="Nouvelle Asso")
+    
     montant_standard = parametre.montant_cotisation_mensuelle
 
-    tous_les_membres = Membre.objects.all()
+    # Membres de l'association
+    tous_les_membres = Membre.objects.filter(association_id=assoc_id)
     retards = []
     
     for membre in tous_les_membres:
@@ -133,15 +146,17 @@ def dashboard(request):
     retards = sorted(retards, key=lambda x: x['montant_du'], reverse=True)
 
     stats = {
-        'total_membres': Membre.objects.filter(statut='actif').count(),
+        'total_membres': tous_les_membres.filter(statut='actif').count(),
         'cotisations_mois': parametre.montant_cotisation_mensuelle, 
         'retards': len(retards),
         'total_annee': Cotisation.objects.filter(
+            association_id=assoc_id,
             annee=annee, statut='payee'
         ).aggregate(total=Sum('montant'))['total'] or 0,
     }
 
     derniers_paiements = Cotisation.objects.filter(
+        association_id=assoc_id,
         statut='payee'
     ).select_related('membre').order_by('-date_paiement')[:10]
 
@@ -154,12 +169,14 @@ def dashboard(request):
     })
 
 
+# --- COTISATIONS ---
+
 @check_acces('acces_cotisations')
 def liste_cotisations(request):
     type_filter = request.GET.get('type', '')
     statut_filter = request.GET.get('statut', '')
 
-    cotisations = Cotisation.objects.select_related('membre').order_by('-date_creation')
+    cotisations = Cotisation.objects.filter(association_id=get_assoc_id(request)).select_related('membre').order_by('-date_creation')
     if type_filter:
         cotisations = cotisations.filter(type_cotisation=type_filter)
     if statut_filter:
@@ -182,6 +199,7 @@ def ajouter_cotisation(request):
             aujourd_hui = timezone.now().date()
             cotisation.annee = aujourd_hui.year
             cotisation.statut = 'payee'
+            cotisation.association_id = get_assoc_id(request)
             
             if cotisation.type_cotisation == 'mensuelle':
                 derniere_cotisation = Cotisation.objects.filter(
@@ -217,6 +235,7 @@ def ajouter_cotisation(request):
                     
                     if not deja_paye:
                         nouvelle_cot = Cotisation(
+                            association_id=get_assoc_id(request),
                             membre=cotisation.membre,
                             type_cotisation='mensuelle',
                             montant=cotisation.montant,
@@ -241,6 +260,7 @@ def ajouter_cotisation(request):
             return redirect('liste_cotisations')
     else:
         form = CotisationForm()
+        form.fields['membre'].queryset = Membre.objects.filter(association_id=get_assoc_id(request))
     
     return render(request, 'cotisations/form.html', {
         'form': form,
@@ -259,6 +279,7 @@ def modifier_cotisation(request, pk):
             return redirect('liste_cotisations')
     else:
         form = CotisationForm(instance=cotisation)
+        form.fields['membre'].queryset = Membre.objects.filter(association_id=get_assoc_id(request))
     return render(request, 'cotisations/form.html', {
         'form': form,
         'titre': 'Modifier la cotisation',
@@ -309,6 +330,10 @@ def supprimer_cotisation(request, pk):
 def creer_cotisation_exceptionnelle(request):
     if request.method == 'POST':
         form = CotisationExceptionnelleForm(request.POST)
+        form.fields['membre_beneficiaire'].queryset = Membre.objects.filter(
+            association_id=get_assoc_id(request), statut='actif'
+        )
+        
         if form.is_valid():
             type_cot = form.cleaned_data['type_cotisation']
             beneficiaire = form.cleaned_data['membre_beneficiaire']
@@ -316,7 +341,9 @@ def creer_cotisation_exceptionnelle(request):
             montant = form.cleaned_data['montant']
             
             date_echeance = timezone.now().date()
-            membres_actifs = Membre.objects.filter(statut='actif')
+            membres_actifs = Membre.objects.filter(
+                association_id=get_assoc_id(request), statut='actif'
+            )
             
             if type_cot == 'individuelle':
                 if not beneficiaire:
@@ -331,6 +358,7 @@ def creer_cotisation_exceptionnelle(request):
                 ).exists()
                 if not deja_existe:
                     Cotisation.objects.create(
+                        association_id=get_assoc_id(request),
                         membre=membre, type_cotisation='exceptionnelle',
                         montant=montant, date_echeance=date_echeance,
                         libelle=libelle, statut='en_attente'
@@ -341,13 +369,21 @@ def creer_cotisation_exceptionnelle(request):
             return redirect('liste_cotisations')
     else:
         form = CotisationExceptionnelleForm()
+        form.fields['membre_beneficiaire'].queryset = Membre.objects.filter(
+            association_id=get_assoc_id(request), statut='actif'
+        )
     
     return render(request, 'cotisations/form_exceptionnelle.html', {'form': form})
 
 
+# --- PARAMETRES ---
+
 @check_acces('acces_parametres')
 def parametres(request):
-    parametre, created = Parametre.objects.get_or_create(id=1)
+    parametre = Parametre.objects.filter(association_id=get_assoc_id(request)).first()
+    if not parametre:
+        parametre = Parametre.objects.create(association_id=get_assoc_id(request), nom_association="Nouvelle Asso")
+        
     if request.method == 'POST':
         form = ParametreForm(request.POST, request.FILES, instance=parametre)
         if form.is_valid():
@@ -359,9 +395,14 @@ def parametres(request):
     return render(request, 'cotisations/parametres.html', {'form': form})
 
 
+# --- MOTIFS EXCEPTIONNELS ---
+
 @check_acces('acces_cotisations')
 def liste_motifs_exceptionnels(request):
-    libelles_bruts = Cotisation.objects.filter(type_cotisation='exceptionnelle').values_list('libelle', flat=True)
+    libelles_bruts = Cotisation.objects.filter(
+        association_id=get_assoc_id(request),
+        type_cotisation='exceptionnelle'
+    ).values_list('libelle', flat=True)
     
     libelles_uniques = set()
     for libelle in libelles_bruts:
@@ -370,7 +411,10 @@ def liste_motifs_exceptionnels(request):
     
     motifs = []
     for libelle in libelles_uniques:
-        cotisations_du_motif = Cotisation.objects.filter(type_cotisation='exceptionnelle', libelle=libelle)
+        cotisations_du_motif = Cotisation.objects.filter(
+            association_id=get_assoc_id(request),
+            type_cotisation='exceptionnelle', libelle=libelle
+        )
         montant_unitaire = cotisations_du_motif.first().montant
         total_collecte = cotisations_du_motif.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
         nb_payes = cotisations_du_motif.filter(statut='payee').count()
@@ -396,6 +440,7 @@ def liste_motifs_exceptionnels(request):
 @check_acces('acces_cotisations')
 def detail_motif_exceptionnel(request, libelle):
     cotisations = Cotisation.objects.filter(
+        association_id=get_assoc_id(request),
         type_cotisation='exceptionnelle', 
         libelle=libelle
     ).select_related('membre').order_by('membre__nom', 'membre__prenom')
@@ -415,14 +460,20 @@ def detail_motif_exceptionnel(request, libelle):
 
 @check_acces('acces_cotisations')
 def liste_motifs_exceptionnels_pdf(request):
-    libelles = Cotisation.objects.filter(type_cotisation='exceptionnelle').values_list('libelle', flat=True).distinct()
+    libelles = Cotisation.objects.filter(
+        association_id=get_assoc_id(request),
+        type_cotisation='exceptionnelle'
+    ).values_list('libelle', flat=True).distinct()
     
     motifs = []
     for libelle in libelles:
         if not libelle:
             continue
             
-        cotisations_du_motif = Cotisation.objects.filter(type_cotisation='exceptionnelle', libelle=libelle)
+        cotisations_du_motif = Cotisation.objects.filter(
+            association_id=get_assoc_id(request),
+            type_cotisation='exceptionnelle', libelle=libelle
+        )
         montant_unitaire = cotisations_du_motif.first().montant
         total_collecte = cotisations_du_motif.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
         nb_payes = cotisations_du_motif.filter(statut='payee').count()
@@ -440,10 +491,14 @@ def liste_motifs_exceptionnels_pdf(request):
     
     motifs = sorted(motifs, key=lambda x: x['libelle'])
 
+    # ⬇️ RÉCUPÉRATION DE L'ASSOCIATION ACTIVE
+    assoc_active = Association.objects.filter(id=get_assoc_id(request)).first()
+
     html_string = render_to_string('cotisations/motifs_exceptionnels_pdf.html', {
         'motifs': motifs,
         'today': timezone.now().date(),
-        'logo_base64': get_logo_base64(),
+        'logo_base64': get_logo_base64(request),
+        'nom_association': assoc_active.nom if assoc_active else "Nom de l'association", # ⬅️ AJOUTÉ
     })
 
     html = HTML(string=html_string)
@@ -458,6 +513,7 @@ def liste_motifs_exceptionnels_pdf(request):
 @check_acces('acces_cotisations')
 def detail_motif_exceptionnel_pdf(request, libelle):
     cotisations = Cotisation.objects.filter(
+        association_id=get_assoc_id(request),
         type_cotisation='exceptionnelle', 
         libelle=libelle
     ).select_related('membre').order_by('membre__nom', 'membre__prenom')
@@ -466,6 +522,9 @@ def detail_motif_exceptionnel_pdf(request, libelle):
     nb_payes = cotisations.filter(statut='payee').count()
     nb_impayes = cotisations.filter(statut='en_attente').count()
 
+    # ⬇️ RÉCUPÉRATION DE L'ASSOCIATION ACTIVE
+    assoc_active = Association.objects.filter(id=get_assoc_id(request)).first()
+
     html_string = render_to_string('cotisations/detail_motif_exceptionnel_pdf.html', {
         'libelle': libelle,
         'cotisations': cotisations,
@@ -473,7 +532,8 @@ def detail_motif_exceptionnel_pdf(request, libelle):
         'nb_payes': nb_payes,
         'nb_impayes': nb_impayes,
         'today': timezone.now().date(),
-        'logo_base64': get_logo_base64(),
+        'logo_base64': get_logo_base64(request),
+        'nom_association': assoc_active.nom if assoc_active else "Nom de l'association", # ⬅️ AJOUTÉ
     })
 
     html = HTML(string=html_string)
@@ -485,7 +545,7 @@ def detail_motif_exceptionnel_pdf(request, libelle):
     return response
 
 
-# --- VUES POUR LES SAUVEGARDES (PROTÉGÉES PAR ACCES_SAUVEGARDES) ---
+# --- SAUVEGARDES ---
 
 @check_acces('acces_sauvegardes')
 def liste_sauvegardes(request):
@@ -502,15 +562,16 @@ def creer_sauvegarde(request):
         from membres.models import Membre, Groupe, Poste, Reunion, ProfilAcces
         from depenses.models import Depense
         
+        assoc_id = get_assoc_id(request)
         data = {
-            'membres': json.loads(serialize('json', Membre.objects.all())),
-            'groupes': json.loads(serialize('json', Groupe.objects.all())),
-            'postes': json.loads(serialize('json', Poste.objects.all())),
-            'reunions': json.loads(serialize('json', Reunion.objects.all())),
+            'membres': json.loads(serialize('json', Membre.objects.filter(association_id=assoc_id))),
+            'groupes': json.loads(serialize('json', Groupe.objects.filter(association_id=assoc_id))),
+            'postes': json.loads(serialize('json', Poste.objects.filter(association_id=assoc_id))),
+            'reunions': json.loads(serialize('json', Reunion.objects.filter(association_id=assoc_id))),
             'profils_acces': json.loads(serialize('json', ProfilAcces.objects.all())),
-            'cotisations': json.loads(serialize('json', Cotisation.objects.all())),
-            'parametres': json.loads(serialize('json', Parametre.objects.all())),
-            'depenses': json.loads(serialize('json', Depense.objects.all())),
+            'cotisations': json.loads(serialize('json', Cotisation.objects.filter(association_id=assoc_id))),
+            'parametres': json.loads(serialize('json', Parametre.objects.filter(association_id=assoc_id))),
+            'depenses': json.loads(serialize('json', Depense.objects.filter(association_id=assoc_id))),
         }
         
         chemin_fichier = os.path.join('sauvegardes', nom_fichier)
@@ -519,30 +580,7 @@ def creer_sauvegarde(request):
         taille = default_storage.size(fichier)
         Sauvegarde.objects.create(nom_fichier=nom_fichier, taille=taille)
         
-        neon_api_key = os.environ.get('NEON_API_KEY')
-        neon_project_id = os.environ.get('NEON_PROJECT_ID')
-        neon_branch_id = os.environ.get('NEON_BRANCH_ID')
-
-        if neon_api_key and neon_project_id and neon_branch_id:
-            try:
-                neon_branch_id = neon_branch_id.strip()
-                url = f"https://console.neon.tech/api/v2/projects/{neon_project_id}/branches/{neon_branch_id}/snapshot"
-                headers = {
-                    "Authorization": f"Bearer {neon_api_key}",
-                    "Content-Type": "application/json"
-                }
-                params = {"name": f"snapshot-app-{date_str}"}
-                
-                response = requests.post(url, headers=headers, params=params, timeout=15)
-                
-                if response.status_code in [200, 201]:
-                    messages.success(request, f"Sauvegarde locale ET snapshot Neon créés avec succès !")
-                else:
-                    messages.warning(request, f"Sauvegarde locale OK, mais Neon a renvoyé une erreur (Code: {response.status_code}).")
-            except Exception as e:
-                messages.warning(request, f"Sauvegarde locale OK, mais erreur de connexion à Neon : {e}")
-        else:
-            messages.info(request, "Sauvegarde locale OK. (API Neon non configurée).")
+        messages.success(request, "Sauvegarde locale créée avec succès.")
         
         sauvegardes = Sauvegarde.objects.all().order_by('-date_creation')
         if sauvegardes.count() > 7:
@@ -583,3 +621,19 @@ def telecharger_sauvegarde(request, pk):
     else:
         messages.error(request, "Le fichier physique est introuvable.")
         return redirect('liste_sauvegardes')
+
+
+# --- GESTION DES ASSOCIATIONS ---
+
+@login_required
+def choisir_association(request):
+    associations = Association.objects.filter(est_active=True)
+    return render(request, 'cotisations/choisir_association.html', {'associations': associations})
+
+
+@login_required
+def selectionner_association(request, pk):
+    association = get_object_or_404(Association, pk=pk)
+    request.session['association_id'] = association.id
+    messages.success(request, f"Vous administrez maintenant : {association.nom}")
+    return redirect('dashboard')

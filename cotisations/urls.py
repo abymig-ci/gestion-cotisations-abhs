@@ -24,4 +24,7 @@ urlpatterns = [
     path('sauvegardes/<int:pk>/supprimer/', views.supprimer_sauvegarde, name='supprimer_sauvegarde'),
     # AJOUT DE L'URL DE TÉLÉCHARGEMENT
     path('sauvegardes/<int:pk>/telecharger/', views.telecharger_sauvegarde, name='telecharger_sauvegarde'),
+    path('choisir-association/', views.choisir_association, name='choisir_association'),
+    path('choisir-association/', views.choisir_association, name='choisir_association'),
+    path('choisir-association/<int:pk>/selectionner/', views.selectionner_association, name='selectionner_association'),
 ]

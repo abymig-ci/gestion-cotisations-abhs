@@ -3,6 +3,20 @@ from django.utils import timezone
 from membres.models import Membre
 
 
+class Association(models.Model):
+    nom = models.CharField(max_length=200)
+    logo = models.ImageField(upload_to='logos_associations/', blank=True, null=True)
+    couleur_principale = models.CharField(max_length=7, default="#0a1c5c")
+    est_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Association"
+        verbose_name_plural = "Associations"
+
+    def __str__(self):
+        return self.nom
+
+
 class Cotisation(models.Model):
     TYPE_CHOICES = [
         ('mensuelle', 'Mensuelle'),
@@ -20,6 +34,14 @@ class Cotisation(models.Model):
         (9, 'Septembre'), (10, 'Octobre'), (11, 'Novembre'), (12, 'Décembre'),
     ]
 
+    # ⬇️ NOUVEAU : Lien avec l'association
+    association = models.ForeignKey(
+        Association, on_delete=models.CASCADE,
+        related_name='cotisations',
+        null=True, blank=True,
+        verbose_name="Association"
+    )
+
     membre = models.ForeignKey(
         Membre,
         on_delete=models.CASCADE,
@@ -31,8 +53,7 @@ class Cotisation(models.Model):
     annee = models.IntegerField(default=timezone.now().year)
     
     nombre_mois = models.IntegerField(
-        null=True, 
-        blank=True, 
+        null=True, blank=True,
         help_text="Remplir si le membre paie plusieurs mois d'avance"
     )
     
@@ -44,8 +65,7 @@ class Cotisation(models.Model):
         default='en_attente'
     )
     libelle = models.CharField(
-        max_length=200,
-        blank=True,
+        max_length=200, blank=True,
         help_text="Pour les cotisations exceptionnelles"
     )
     observation = models.TextField(blank=True)
@@ -63,22 +83,25 @@ class Cotisation(models.Model):
 
 
 class Parametre(models.Model):
-    # 1. Choix du logo
+    # ⬇️ NOUVEAU : Lien avec l'association (1 seul paramètre par asso)
+    association = models.OneToOneField(
+        Association, on_delete=models.CASCADE,
+        related_name='parametre',
+        null=True, blank=True,
+        verbose_name="Association"
+    )
+
     logo = models.ImageField(
-        upload_to='logos/', 
-        blank=True, 
-        null=True, 
+        upload_to='logos/', blank=True, null=True,
         verbose_name="Logo de l'association"
     )
     
-    # 2. Choix du nom de l'Association
     nom_association = models.CharField(
         max_length=200, 
         default="ASSOCIATION DES BIOLOGISTES HAUT SASSANDRA",
         verbose_name="Nom de l'association"
     )
     
-    # 3. NOUVEAU : Choix de la couleur principale
     couleur_principale = models.CharField(
         max_length=7, 
         default="#0a1c5c", 
@@ -86,7 +109,6 @@ class Parametre(models.Model):
         help_text="Ex: #0a1c5c pour du bleu marine"
     )
     
-    # 4. Liste déroulante pour la date de référence
     DATE_REFERENCE_CHOICES = [
         ('date_actuelle', "Date actuelle"),
         ('derniere_reunion', "Date de la dernière réunion"),
@@ -98,18 +120,14 @@ class Parametre(models.Model):
         verbose_name="Base de calcul pour être à jour"
     )
     
-    # 5. Nombre de mois avant cette date
     nombre_mois_tolerance = models.IntegerField(
         default=4,
         verbose_name="Nombre de mois de tolérance avant la date de référence",
         help_text="Un membre est à jour s'il a payé jusqu'à X mois avant la date de référence."
     )
     
-    # 6. Montant fixé pour la cotisation mensuelle
     montant_cotisation_mensuelle = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        default=5000,
+        max_digits=10, decimal_places=2, default=5000,
         verbose_name="Montant de la cotisation mensuelle (FCFA)"
     )
     
@@ -121,7 +139,6 @@ class Parametre(models.Model):
         return f"Paramètres de {self.nom_association}"
 
 
-# --- NOUVEAU MODÈLE POUR LES SAUVEGARDES ---
 class Sauvegarde(models.Model):
     nom_fichier = models.CharField(max_length=255)
     date_creation = models.DateTimeField(auto_now_add=True)

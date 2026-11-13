@@ -9,6 +9,11 @@ from cotisations.models import Cotisation
 from membres.models import ProfilAcces
 
 
+# --- HELPERS ---
+def get_assoc_id(request):
+    return request.session.get('association_id')
+
+
 # --- DÉCORATEUR POUR LE NOUVEAU SYSTÈME D'ACCÈS ---
 def has_acces(user, acces_name):
     if user.is_superuser:
@@ -34,10 +39,15 @@ def check_acces(acces_name):
 
 @check_acces('acces_depenses')
 def liste_depenses(request):
-    depenses = Depense.objects.all()
+    # ⬇️ Filtre par association
+    depenses = Depense.objects.filter(association_id=get_assoc_id(request))
     total_depenses = depenses.aggregate(total=Sum('montant'))['total'] or 0
     
-    total_cotisations = Cotisation.objects.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
+    # ⬇️ Cotisations filtrées par association
+    total_cotisations = Cotisation.objects.filter(
+        association_id=get_assoc_id(request),
+        statut='payee'
+    ).aggregate(total=Sum('montant'))['total'] or 0
     solde = total_cotisations - total_depenses
 
     return render(request, 'depenses/liste.html', {
@@ -52,7 +62,9 @@ def ajouter_depense(request):
     if request.method == 'POST':
         form = DepenseForm(request.POST)
         if form.is_valid():
-            form.save()
+            depense = form.save(commit=False)  # ⬇️
+            depense.association_id = get_assoc_id(request)
+            depense.save()
             messages.success(request, "Dépense enregistrée avec succès.")
             return redirect('liste_depenses')
     else:
@@ -88,10 +100,15 @@ def supprimer_depense(request, pk):
 
 @login_required
 def liste_depenses_publique(request):
-    depenses = Depense.objects.all()
+    # ⬇️ Filtre par association
+    depenses = Depense.objects.filter(association_id=get_assoc_id(request))
     total_depenses = depenses.aggregate(total=Sum('montant'))['total'] or 0
     
-    total_cotisations = Cotisation.objects.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
+    # ⬇️ Cotisations filtrées par association
+    total_cotisations = Cotisation.objects.filter(
+        association_id=get_assoc_id(request),
+        statut='payee'
+    ).aggregate(total=Sum('montant'))['total'] or 0
     solde = total_cotisations - total_depenses
     
     return render(request, 'depenses/liste_publique.html', {

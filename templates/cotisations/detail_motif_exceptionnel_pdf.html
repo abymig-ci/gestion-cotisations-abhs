@@ -15,18 +15,38 @@
         .header {
             display: flex;
             align-items: center;
-            justify-content: center; /* Centre le bloc logo + texte */
+            justify-content: center;
             gap: 20px;
             border-bottom: 2px solid #0a1c5c;
             padding-bottom: 10px;
             margin-bottom: 20px;
             text-align: left;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
         .header img {
-            max-width: 80px;
+            max-width: 65px; /* Légèrement plus petit */
+            max-height: 65px; /* Force un carré parfait */
+            object-fit: contain; /* Garde les proportions de l'image */
             border-radius: 50%;
+            flex-shrink: 0;
+            margin-right: 15px; /* Un peu d'espace avec le texte */
         }
-        .header h1 { margin: 0; color: #0a1c5c; font-size: 16pt; }
+        
+        /* ⬇️ NOUVEAU : Conteneur du texte */
+        .header div {
+            flex: 1;
+            min-width: 0; /* CRUCIAL : empêche le texte long de faire déborder le flexbox */
+        }
+
+        .header h1 { 
+            margin: 0; 
+            color: #0a1c5c; 
+            font-size: 16pt; 
+            word-wrap: break-word; /* Coupe les mots trop longs */
+            line-height: 1.2;
+        }
         .header p { margin: 5px 0 0; color: #64748b; font-size: 9pt; }
         
         .resume {
@@ -77,11 +97,11 @@
     <div class="header">
         <!-- LOGO EN BASE64 -->
         {% if logo_base64 %}
-            <img src="{{ logo_base64 }}" alt="Logo A.B H.S">
+            <img src="{{ logo_base64 }}" alt="Logo">
         {% endif %}
         
         <div>
-            <h1>ASSOCIATION DES BIOLOGISTES HAUT SASSANDRA</h1>
+            <h1>{{ nom_association }}</h1>
             <p>Détails de la cotisation exceptionnelle : {{ libelle }}</p>
             <p>Généré le {{ today|date:"d/m/Y" }}</p>
         </div>

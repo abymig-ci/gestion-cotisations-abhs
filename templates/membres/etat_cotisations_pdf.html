@@ -72,10 +72,15 @@
 </head>
 <body>
     <div class="header">
-        <!-- AJOUT DU LOGO ICI -->
-        <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo.png' %}" alt="Logo A.B H.S">
+        <!-- ⬇️ On utilise le logo de l'association active (en base64) s'il existe -->
+        {% if logo_base64 %}
+            <img src="{{ logo_base64 }}" alt="Logo">
+        {% else %}
+            <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo.png' %}" alt="Logo A.B H.S">
+        {% endif %}
         
-        <h1>ASSOCIATION DES BIOLOGISTES HAUT SASSANDRA</h1>
+        <!-- ⬇️ On utilise la variable passée par la vue -->
+        <h1>{{ nom_association }}</h1>
         <p>État des cotisations au {{ today|date:"d/m/Y" }}</p>
     </div>
 

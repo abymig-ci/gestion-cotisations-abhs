@@ -21,11 +21,17 @@ from .models import Membre, Groupe, Poste, Reunion, ProfilAcces
 from .forms import MembreForm, GroupeForm, PosteForm, ReunionForm
 
 
+# --- HELPERS ---
+def get_assoc_id(request):
+    return request.session.get('association_id')
+
+
 # --- FONCTION POUR LE LOGO EN BASE64 ---
-def get_logo_base64():
+def get_logo_base64(request):
     try:
         from cotisations.models import Parametre
-        parametre = Parametre.objects.first()
+        # ⬇️ On prend le logo de l'association active
+        parametre = Parametre.objects.filter(association_id=get_assoc_id(request)).first()
         if parametre and parametre.logo:
             logo_path = parametre.logo.path
         else:
@@ -77,7 +83,8 @@ def liste_membres(request):
     poste_id = request.GET.get('poste')
     statut_filter = request.GET.get('statut')
     
-    membres = Membre.objects.select_related('poste', 'groupe').annotate(
+    # ⬇️ FILTRE PAR ASSOCIATION ⬇️
+    membres = Membre.objects.filter(association_id=get_assoc_id(request)).select_related('poste', 'groupe').annotate(
         nb_cotisations=Count('cotisations'),
         total_paye=Sum('cotisations__montant', filter=Q(cotisations__statut='payee'))
     )
@@ -103,7 +110,9 @@ def ajouter_membre(request):
     if request.method == 'POST':
         form = MembreForm(request.POST)
         if form.is_valid():
-            form.save()
+            membre = form.save(commit=False)  # ⬇️ On ne sauvegarde pas tout de suite
+            membre.association_id = get_assoc_id(request)  # ⬇️ On assigne l'association
+            membre.save()
             messages.success(request, "Membre ajouté avec succès.")
             return redirect('liste_membres')
     else:
@@ -145,7 +154,8 @@ def detail_membre(request, pk):
     montant_assiste = 0
     from cotisations.models import Parametre
     
-    parametre = Parametre.objects.first()
+    # ⬇️ Paramètres de l'association active
+    parametre = Parametre.objects.filter(association_id=get_assoc_id(request)).first()
     montant_standard = parametre.montant_cotisation_mensuelle if parametre else 5000
     base_calcul = parametre.base_calcul_date if parametre else 'derniere_reunion'
     mois_tolerance = parametre.nombre_mois_tolerance if parametre else 4
@@ -158,7 +168,11 @@ def detail_membre(request, pk):
     # 2. Mois de retard non enregistrés
     if membre.statut == 'actif' and membre.statut_cotisation != "En carence":
         if base_calcul == 'derniere_reunion':
-            derniere_reunion = Reunion.objects.filter(date_reunion__lte=timezone.now()).order_by('-date_reunion').first()
+            # ⬇️ Réunions de l'association active
+            derniere_reunion = Reunion.objects.filter(
+                association_id=get_assoc_id(request),
+                date_reunion__lte=timezone.now()
+            ).order_by('-date_reunion').first()
             if derniere_reunion:
                 date_reference = derniere_reunion.date_reunion.date()
             else:
@@ -214,7 +228,8 @@ def supprimer_membre(request, pk):
 
 @check_acces('acces_groupes')
 def liste_groupes(request):
-    groupes = Groupe.objects.annotate(nb_membres=Count('membres'))
+    # ⬇️ Filtre par association
+    groupes = Groupe.objects.filter(association_id=get_assoc_id(request)).annotate(nb_membres=Count('membres'))
     return render(request, 'membres/liste_groupes.html', {'groupes': groupes})
 
 
@@ -223,7 +238,9 @@ def ajouter_groupe(request):
     if request.method == 'POST':
         form = GroupeForm(request.POST)
         if form.is_valid():
-            form.save()
+            groupe = form.save(commit=False)
+            groupe.association_id = get_assoc_id(request)  # ⬇️ Assignation
+            groupe.save()
             messages.success(request, "Groupe créé avec succès.")
             return redirect('liste_groupes')
     else:
@@ -260,7 +277,8 @@ def supprimer_groupe(request, pk):
 
 @check_acces('acces_postes')
 def liste_postes(request):
-    postes = Poste.objects.annotate(nb_membres=Count('membres'))
+    # ⬇️ Filtre par association
+    postes = Poste.objects.filter(association_id=get_assoc_id(request)).annotate(nb_membres=Count('membres'))
     return render(request, 'membres/liste_postes.html', {'postes': postes})
 
 
@@ -269,7 +287,9 @@ def ajouter_poste(request):
     if request.method == 'POST':
         form = PosteForm(request.POST)
         if form.is_valid():
-            form.save()
+            poste = form.save(commit=False)
+            poste.association_id = get_assoc_id(request)  # ⬇️ Assignation
+            poste.save()
             messages.success(request, "Poste créé avec succès.")
             return redirect('liste_postes')
     else:
@@ -295,7 +315,8 @@ def modifier_poste(request, pk):
 
 @check_acces('acces_reunions')
 def liste_reunions(request):
-    reunions = Reunion.objects.select_related('groupe').all()
+    # ⬇️ Filtre par association
+    reunions = Reunion.objects.filter(association_id=get_assoc_id(request)).select_related('groupe').all()
     return render(request, 'membres/liste_reunions.html', {'reunions': reunions})
 
 
@@ -304,7 +325,9 @@ def ajouter_reunion(request):
     if request.method == 'POST':
         form = ReunionForm(request.POST)
         if form.is_valid():
-            form.save()
+            reunion = form.save(commit=False)
+            reunion.association_id = get_assoc_id(request)  # ⬇️ Assignation
+            reunion.save()
             messages.success(request, "Réunion programmée avec succès.")
             return redirect('liste_reunions')
     else:
@@ -354,22 +377,27 @@ def mon_espace(request):
     
     from cotisations.models import Parametre
     
-    parametre = Parametre.objects.first()
+    # ⬇️ Paramètres de l'association active
+    parametre = Parametre.objects.filter(association_id=get_assoc_id(request)).first()
     montant_standard = parametre.montant_cotisation_mensuelle if parametre else 5000
     base_calcul = parametre.base_calcul_date if parametre else 'derniere_reunion'
     mois_tolerance = parametre.nombre_mois_tolerance if parametre else 4
     
-    # 1. Cotisations en attente (inclut exceptionnelles et mensuelles)
+    # 1. Cotisations en attente
     montant_en_attente = cotisations.filter(statut='en_attente').aggregate(
         total=Sum('montant')
     )['total'] or 0
     montant_du += montant_en_attente
-    montant_assiste += montant_en_attente  # <-- On ajoute ce montant au calcul "assisté"
+    montant_assiste += montant_en_attente
     
     # 2. Mois de retard non enregistrés
     if membre.statut == 'actif' and membre.statut_cotisation != "En carence":
         if base_calcul == 'derniere_reunion':
-            derniere_reunion = Reunion.objects.filter(date_reunion__lte=timezone.now()).order_by('-date_reunion').first()
+            # ⬇️ Réunions de l'association active
+            derniere_reunion = Reunion.objects.filter(
+                association_id=get_assoc_id(request),
+                date_reunion__lte=timezone.now()
+            ).order_by('-date_reunion').first()
             if derniere_reunion:
                 date_reference = derniere_reunion.date_reunion.date()
             else:
@@ -399,7 +427,6 @@ def mon_espace(request):
                     montant_du += montant_standard
                     if mois_courant <= date_limite:
                         montant_assiste += montant_standard
-    # -----------------------------
 
     return render(request, 'membres/mon_espace.html', {
         'membre': membre,
@@ -413,7 +440,11 @@ def mon_espace(request):
 
 @login_required
 def membres_a_jour(request):
-    membres = Membre.objects.filter(statut='actif').select_related('poste', 'groupe').annotate(
+    # ⬇️ Filtre par association
+    membres = Membre.objects.filter(
+        association_id=get_assoc_id(request), 
+        statut='actif'
+    ).select_related('poste', 'groupe').annotate(
         nb_cotisations=Count('cotisations'),
         total_paye=Sum('cotisations__montant', filter=Q(cotisations__statut='payee'))
     )
@@ -428,7 +459,11 @@ def membres_a_jour(request):
 
 @login_required
 def membres_en_retard(request):
-    membres = Membre.objects.filter(statut='actif').select_related('poste', 'groupe').annotate(
+    # ⬇️ Filtre par association
+    membres = Membre.objects.filter(
+        association_id=get_assoc_id(request), 
+        statut='actif'
+    ).select_related('poste', 'groupe').annotate(
         nb_cotisations=Count('cotisations'),
         total_paye=Sum('cotisations__montant', filter=Q(cotisations__statut='payee'))
     )
@@ -566,11 +601,13 @@ def definir_mot_de_passe(request, token):
 
 @admin_required
 def etat_cotisations_pdf(request):
-    groupes = Groupe.objects.all().order_by('nom')
+    # ⬇️ Filtre par association
+    groupes = Groupe.objects.filter(association_id=get_assoc_id(request)).order_by('nom')
     etat_par_groupe = []
     
     for groupe in groupes:
         membres_du_groupe = Membre.objects.filter(
+            association_id=get_assoc_id(request),
             statut='actif', groupe=groupe
         ).select_related('poste').order_by('nom', 'prenom')
         
@@ -602,7 +639,11 @@ def etat_cotisations_pdf(request):
                 'total_groupe': sum(m['total_paye'] for m in liste_membres)
             })
     
-    membres_sans_groupe = Membre.objects.filter(statut='actif', groupe__isnull=True).select_related('poste').order_by('nom', 'prenom')
+    membres_sans_groupe = Membre.objects.filter(
+        association_id=get_assoc_id(request),
+        statut='actif', groupe__isnull=True
+    ).select_related('poste').order_by('nom', 'prenom')
+    
     if membres_sans_groupe.exists():
         liste_sans_groupe = []
         for membre in membres_sans_groupe:
@@ -621,10 +662,15 @@ def etat_cotisations_pdf(request):
             'total_groupe': sum(m['total_paye'] for m in liste_sans_groupe)
         })
 
+    # ⬇️ NOUVEAU : On récupère l'association active pour le PDF
+    from cotisations.models import Association
+    assoc_active = Association.objects.filter(id=get_assoc_id(request)).first()
+
     html_string = render_to_string('membres/etat_cotisations_pdf.html', {
         'etat_par_groupe': etat_par_groupe,
         'today': timezone.now().date(),
-        'logo_base64': get_logo_base64(),
+        'logo_base64': get_logo_base64(request), # ⬅️ On passe request
+        'nom_association': assoc_active.nom if assoc_active else "Nom de l'association", # ⬅️ NOUVEAU
     })
 
     html = HTML(string=html_string)
