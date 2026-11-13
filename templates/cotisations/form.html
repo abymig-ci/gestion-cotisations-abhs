@@ -40,4 +40,31 @@
         </div>
     </div>
 </div>
+
+<!-- SCRIPT POUR DÉSACTIVER LE CHAMP NOMBRE_MOIS SI NON MENSUEL -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('id_type_cotisation');
+        const nombreMoisInput = document.getElementById('id_nombre_mois');
+
+        if (typeSelect && nombreMoisInput) {
+            function toggleNombreMois() {
+                if (typeSelect.value !== 'mensuelle') {
+                    // Si ce n'est pas une mensuelle : on désactive et on vide
+                    nombreMoisInput.disabled = true;
+                    nombreMoisInput.value = '';
+                } else {
+                    // Si c'est une mensuelle : on réactive
+                    nombreMoisInput.disabled = false;
+                }
+            }
+
+            // Applique l'état au chargement de la page
+            toggleNombreMois();
+
+            // Applique l'état lorsqu'on change de type
+            typeSelect.addEventListener('change', toggleNombreMois);
+        }
+    });
+</script>
 {% endblock %}
