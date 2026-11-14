@@ -7,6 +7,12 @@
         @page {
             size: A4 landscape;
             margin: 1.5cm;
+            @bottom-center {
+            content: "Page " counter(page) " sur " counter(pages);
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 9pt;
+            color: #64748b;
+        }
         }
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
@@ -68,6 +74,12 @@
             border-top: none;
             font-size: 9pt;
         }
+
+        /* Pagination : le tableau d'un groupe continue sur la page suivante */
+        thead { display: table-header-group; }   /* l'en-tête se répète à chaque page */
+        tr { page-break-inside: avoid; break-inside: avoid; }  /* une ligne n'est jamais coupée */
+        .groupe-titre { break-after: avoid; page-break-after: avoid; }  /* titre jamais seul en bas */
+        .total-groupe { break-inside: avoid; }
     </style>
 </head>
 <body>
