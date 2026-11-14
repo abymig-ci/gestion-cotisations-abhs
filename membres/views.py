@@ -114,7 +114,7 @@ def liste_membres(request):
 @check_acces('acces_membres')
 def ajouter_membre(request):
     if request.method == 'POST':
-        form = MembreForm(request.POST)
+        form = MembreForm(request.POST, association_id=get_assoc_id(request))
         if form.is_valid():
             membre = form.save(commit=False)  # ⬇️ On ne sauvegarde pas tout de suite
             membre.association_id = get_assoc_id(request)  # ⬇️ On assigne l'association
@@ -122,7 +122,7 @@ def ajouter_membre(request):
             messages.success(request, "Membre ajouté avec succès.")
             return redirect('liste_membres')
     else:
-        form = MembreForm()
+        form = MembreForm(association_id=get_assoc_id(request))
     return render(request, 'membres/form.html', {'form': form, 'titre': 'Nouveau membre'})
 
 
@@ -130,13 +130,13 @@ def ajouter_membre(request):
 def modifier_membre(request, pk):
     membre = get_object_or_404(Membre, pk=pk)
     if request.method == 'POST':
-        form = MembreForm(request.POST, instance=membre)
+        form = MembreForm(request.POST, instance=membre, association_id=membre.association_id or get_assoc_id(request))
         if form.is_valid():
             form.save()
             messages.success(request, "Membre modifié avec succès.")
             return redirect('liste_membres')
     else:
-        form = MembreForm(instance=membre)
+        form = MembreForm(instance=membre, association_id=membre.association_id or get_assoc_id(request))
     return render(request, 'membres/form.html', {'form': form, 'titre': 'Modifier le membre'})
 
 
@@ -329,7 +329,7 @@ def liste_reunions(request):
 @check_acces('acces_reunions')
 def ajouter_reunion(request):
     if request.method == 'POST':
-        form = ReunionForm(request.POST)
+        form = ReunionForm(request.POST, association_id=get_assoc_id(request))
         if form.is_valid():
             reunion = form.save(commit=False)
             reunion.association_id = get_assoc_id(request)  # ⬇️ Assignation
@@ -337,7 +337,7 @@ def ajouter_reunion(request):
             messages.success(request, "Réunion programmée avec succès.")
             return redirect('liste_reunions')
     else:
-        form = ReunionForm()
+        form = ReunionForm(association_id=get_assoc_id(request))
     return render(request, 'membres/form_reunion.html', {'form': form, 'titre': 'Programmer une réunion'})
 
 
@@ -345,13 +345,13 @@ def ajouter_reunion(request):
 def modifier_reunion(request, pk):
     reunion = get_object_or_404(Reunion, pk=pk)
     if request.method == 'POST':
-        form = ReunionForm(request.POST, instance=reunion)
+        form = ReunionForm(request.POST, instance=reunion, association_id=reunion.association_id or get_assoc_id(request))
         if form.is_valid():
             form.save()
             messages.success(request, "Réunion modifiée avec succès.")
             return redirect('liste_reunions')
     else:
-        form = ReunionForm(instance=reunion)
+        form = ReunionForm(instance=reunion, association_id=reunion.association_id or get_assoc_id(request))
     return render(request, 'membres/form_reunion.html', {'form': form, 'titre': 'Modifier la réunion'})
 
 

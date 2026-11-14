@@ -1,5 +1,4 @@
 from django import forms
-from .models import Membre, Groupe, Poste
 from .models import Membre, Groupe, Poste, Reunion
 
 
@@ -14,7 +13,7 @@ class MembreForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Ex: jean@email.com'}),
             # Ajout de format='%Y-%m-%d' pour forcer le format HTML5
             'date_adhesion': forms.DateInput(
-                format='%Y-%m-%d', 
+                format='%Y-%m-%d',
                 attrs={'type': 'date', 'class': 'form-control'}
             ),
             'poste': forms.Select(attrs={'class': 'form-select'}),
@@ -22,14 +21,19 @@ class MembreForm(forms.ModelForm):
             'statut': forms.Select(attrs={'class': 'form-select'}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, association_id=None, **kwargs):
         super().__init__(*args, **kwargs)
         # On s'assure que la date est au bon format si on modifie un membre existant
         if self.instance and self.instance.pk and self.instance.date_adhesion:
             self.initial['date_adhesion'] = self.instance.date_adhesion.strftime('%Y-%m-%d')
-        
+
         # Afficher "Sans groupe" par défaut si aucun groupe n'est sélectionné
         self.fields['groupe'].empty_label = "Sans groupe"
+
+        # Seuls les groupes et postes de l'association active sont proposés
+        if association_id:
+            self.fields['groupe'].queryset = Groupe.objects.filter(association_id=association_id)
+            self.fields['poste'].queryset = Poste.objects.filter(association_id=association_id)
 
 
 class GroupeForm(forms.ModelForm):
@@ -50,6 +54,7 @@ class PosteForm(forms.ModelForm):
             'nom': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Président(e)'}),
         }
 
+
 class ReunionForm(forms.ModelForm):
     class Meta:
         model = Reunion
@@ -62,10 +67,13 @@ class ReunionForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, association_id=None, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.date_reunion:
             self.initial['date_reunion'] = self.instance.date_reunion.strftime('%Y-%m-%dT%H:%M')
+        if association_id:
+            self.fields['groupe'].queryset = Groupe.objects.filter(association_id=association_id)
+
 
 class MesInformationsForm(forms.ModelForm):
     class Meta:
