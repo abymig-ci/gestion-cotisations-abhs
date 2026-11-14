@@ -29,6 +29,7 @@ urlpatterns = [
     path('reunions/<int:pk>/supprimer/', views.supprimer_reunion, name='supprimer_reunion'),
     
     path('mon-espace/', views.mon_espace, name='mon_espace'),
+    path('mes-informations/', views.mes_informations, name='mes_informations'),
     path('<int:pk>/creer-acces/', views.creer_acces_membre, name='creer_acces_membre'),
     path('<int:pk>/reinitialiser/', views.reinitialiser_mot_de_passe, name='reinitialiser_mot_de_passe'),
     path('public/a-jour/', views.membres_a_jour, name='membres_a_jour'),

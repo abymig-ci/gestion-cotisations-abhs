@@ -18,7 +18,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from .models import Membre, Groupe, Poste, Reunion, ProfilAcces
-from .forms import MembreForm, GroupeForm, PosteForm, ReunionForm
+from .forms import MembreForm, GroupeForm, PosteForm, ReunionForm, MesInformationsForm
 
 
 # --- HELPERS ---
@@ -434,14 +434,40 @@ def mon_espace(request):
                     if mois_courant <= date_limite:
                         montant_assiste += montant_standard
 
+    # Messages défilants saisis dans les Paramètres de l'association
+    messages_defilants = parametre.liste_messages() if parametre else []
+    duree_defilement = max(20, int(sum(len(m) + 8 for m in messages_defilants) * 0.25))
+
     return render(request, 'membres/mon_espace.html', {
         'membre': membre,
         'cotisations': cotisations,
         'total': total,
         'montant_du': montant_du,
         'montant_assiste': montant_assiste,
-        'today': timezone.now().date()
+        'today': timezone.now().date(),
+        'messages_defilants': messages_defilants,
+        'duree_defilement': duree_defilement,
+        'couleur_bandeau': parametre.couleur_principale if parametre else '#0a1c5c',
     })
+
+
+@login_required
+def mes_informations(request):
+    """Le membre complète lui-même son téléphone et son email (et rien d'autre)."""
+    try:
+        membre = request.user.membre_profil
+    except Membre.DoesNotExist:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = MesInformationsForm(request.POST, instance=membre)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Vos informations ont été mises à jour.")
+            return redirect('mon_espace')
+    else:
+        form = MesInformationsForm(instance=membre)
+    return render(request, 'membres/mes_informations.html', {'form': form, 'membre': membre})
 
 
 @login_required

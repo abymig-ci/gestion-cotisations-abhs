@@ -66,3 +66,12 @@ class ReunionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.date_reunion:
             self.initial['date_reunion'] = self.instance.date_reunion.strftime('%Y-%m-%dT%H:%M')
+
+class MesInformationsForm(forms.ModelForm):
+    class Meta:
+        model = Membre
+        fields = ['telephone', 'email']
+        widgets = {
+            'telephone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 0102030405'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Ex: jean@email.com'}),
+        }

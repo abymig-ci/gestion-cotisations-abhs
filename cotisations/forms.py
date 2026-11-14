@@ -17,6 +17,8 @@ class CotisationForm(forms.ModelForm):
             'montant': forms.NumberInput(attrs={'class': 'form-control'}),
             'nombre_mois': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'placeholder': 'Ex: 6'}),
             'libelle': forms.TextInput(attrs={'class': 'form-control'}),
+            'montant_cotisation_mensuelle': forms.NumberInput(attrs={'class': 'form-control'}),
+            'messages_defilants': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Réunion samedi à 16h\nCotisation de novembre à régler'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -45,12 +47,13 @@ class ParametreForm(forms.ModelForm):
     class Meta:
         model = Parametre
         fields = [
-            'logo', 
-            'nom_association', 
-            'couleur_principale',  # <-- NOUVEAU CHAMP
-            'base_calcul_date', 
-            'nombre_mois_tolerance', 
-            'montant_cotisation_mensuelle'
+            'logo',
+            'nom_association',
+            'couleur_principale',
+            'base_calcul_date',
+            'nombre_mois_tolerance',
+            'montant_cotisation_mensuelle',
+            'messages_defilants',
         ]
         widgets = {
             'logo': forms.FileInput(attrs={'class': 'form-control'}),
@@ -59,4 +62,5 @@ class ParametreForm(forms.ModelForm):
             'base_calcul_date': forms.Select(attrs={'class': 'form-select'}),
             'nombre_mois_tolerance': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'montant_cotisation_mensuelle': forms.NumberInput(attrs={'class': 'form-control'}),
+            'messages_defilants': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Réunion samedi à 16h\nCotisation de novembre à régler'}),
         }

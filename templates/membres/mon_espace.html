@@ -3,6 +3,25 @@
 {% block page_title %}Mon Espace Membre{% endblock %}
 
 {% block content %}
+{% if messages_defilants %}
+<style>
+    .bandeau-defilant { position: relative; width: 100%; height: 44px; overflow: hidden; background: {{ couleur_bandeau|default:'#0a1c5c' }}; color: #fff; border-radius: 10px; }
+    .bandeau-piste { position: absolute; top: 0; left: 0; height: 100%; display: flex; align-items: center; width: max-content; animation: defilement-bandeau {{ duree_defilement }}s linear infinite; }
+    .bandeau-defilant:hover .bandeau-piste { animation-play-state: paused; }
+    .bandeau-groupe { display: flex; flex-shrink: 0; min-width: 100vw; justify-content: space-around; }
+    .bandeau-groupe span { white-space: nowrap; padding: 0 2rem; font-weight: 600; }
+    .bandeau-groupe span::before { content: "\2605"; margin-right: 2rem; opacity: .7; }
+    @keyframes defilement-bandeau { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @media (prefers-reduced-motion: reduce) { .bandeau-piste { animation: none; } }
+</style>
+<div class="bandeau-defilant mb-4" role="marquee" aria-label="Informations de l'association">
+    <div class="bandeau-piste">
+        <div class="bandeau-groupe">{% for m in messages_defilants %}<span>{{ m }}</span>{% endfor %}</div>
+        <div class="bandeau-groupe" aria-hidden="true">{% for m in messages_defilants %}<span>{{ m }}</span>{% endfor %}</div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row g-4">
     <div class="col-lg-4">
         <div class="card-custom text-center p-5 h-100">
@@ -48,6 +67,9 @@
 
             <!-- BOUTONS DE NAVIGATION MEMBRE -->
             <div class="d-grid gap-2 border-top pt-3">
+                <a href="{% url 'mes_informations' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-person-lines-fill me-1"></i> {% if membre.telephone and membre.email %}Modifier mes informations{% else %}Compléter mes informations{% endif %}
+                </a>
                 <a href="{% url 'membres_a_jour' %}" class="btn btn-outline-success">
                     <i class="bi bi-check-circle-fill me-1"></i> Liste des membres à jour
                 </a>

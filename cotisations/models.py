@@ -138,9 +138,18 @@ class Parametre(models.Model):
         verbose_name="Montant de la cotisation mensuelle (FCFA)"
     )
     
+    messages_defilants = models.TextField(
+        blank=True, default='',
+        verbose_name="Messages défilants (Mon espace)",
+        help_text="Un message par ligne. Ils défilent en boucle sur la page « Mon espace » des membres."
+    )
+
     class Meta:
         verbose_name = "Paramètre"
         verbose_name_plural = "Paramètres"
+
+    def liste_messages(self):
+        return [ligne.strip() for ligne in (self.messages_defilants or '').splitlines() if ligne.strip()]
 
     def __str__(self):
         return f"Paramètres de {self.nom_association}"
