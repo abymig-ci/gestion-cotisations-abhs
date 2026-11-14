@@ -651,12 +651,31 @@ def telecharger_sauvegarde(request, pk):
 
 # --- GESTION DES ASSOCIATIONS ---
 
+def _url_si_fichier_existe(champ_image):
+    """Adresse d'un ImageField seulement si le fichier existe vraiment (sinon None : pas d'image cassée)."""
+    try:
+        if champ_image and champ_image.name and champ_image.storage.exists(champ_image.name):
+            return champ_image.url
+    except Exception:
+        pass
+    return None
+
+
 @login_required
 def choisir_association(request):
     # Réservé au super utilisateur : les autres utilisateurs ont leur association (celle de leur fiche membre)
     if not request.user.is_superuser:
         return redirect('mon_espace')
-    associations = Association.objects.filter(est_active=True)
+    associations = list(Association.objects.filter(est_active=True))
+    # Le logo affiché est celui des paramètres de chaque association (stocké en base : il ne disparaît pas au redéploiement)
+    parametres = {p.association_id: p for p in Parametre.objects.filter(association__in=associations)}
+    for assoc in associations:
+        param = parametres.get(assoc.id)
+        assoc.logo_affiche = (
+            (param.logo_base64 if param and param.logo_base64 else None)
+            or (_url_si_fichier_existe(param.logo) if param else None)
+            or _url_si_fichier_existe(assoc.logo)
+        )
     return render(request, 'cotisations/choisir_association.html', {'associations': associations})
 
 

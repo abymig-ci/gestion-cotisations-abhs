@@ -14,9 +14,9 @@
                 {{ assoc.nom }}
             </a>
             
-            <!-- Logo à droite -->
-            {% if assoc.logo %}
-                <img src="{{ assoc.logo.url }}" alt="{{ assoc.nom }}" style="max-width: 50px; max-height: 50px; border-radius: 50%; background: white; padding: 2px; border: 1px solid #cbd5e1;">
+            <!-- Logo à droite (celui des paramètres de l'association, stocké en base) -->
+            {% if assoc.logo_affiche %}
+                <img src="{{ assoc.logo_affiche }}" alt="{{ assoc.nom }}" style="max-width: 50px; max-height: 50px; border-radius: 50%; background: white; padding: 2px; border: 1px solid #cbd5e1;">
             {% else %}
                 <div style="width: 50px; height: 50px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #64748b;">Logo</div>
             {% endif %}
