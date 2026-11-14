@@ -104,6 +104,11 @@ def dashboard(request):
     annee = today.year
     mois = today.month
     assoc_id = get_assoc_id(request)
+    if not assoc_id:
+        # Aucune association active : le super utilisateur doit d'abord en choisir une
+        if request.user.is_superuser:
+            return redirect('choisir_association')
+        raise PermissionDenied
 
     # Paramètres de l'association
     parametre = Parametre.objects.filter(association_id=assoc_id).first()
@@ -386,6 +391,10 @@ def creer_cotisation_exceptionnelle(request):
 
 @check_acces('acces_parametres')
 def parametres(request):
+    if not get_assoc_id(request):
+        if request.user.is_superuser:
+            return redirect('choisir_association')
+        raise PermissionDenied
     parametre = Parametre.objects.filter(association_id=get_assoc_id(request)).first()
     if not parametre:
         parametre = Parametre.objects.create(association_id=get_assoc_id(request), nom_association="Nouvelle Asso")
@@ -644,12 +653,17 @@ def telecharger_sauvegarde(request, pk):
 
 @login_required
 def choisir_association(request):
+    # Réservé au super utilisateur : les autres utilisateurs ont leur association (celle de leur fiche membre)
+    if not request.user.is_superuser:
+        return redirect('mon_espace')
     associations = Association.objects.filter(est_active=True)
     return render(request, 'cotisations/choisir_association.html', {'associations': associations})
 
 
 @login_required
 def selectionner_association(request, pk):
+    if not request.user.is_superuser:
+        return redirect('mon_espace')
     association = get_object_or_404(Association, pk=pk)
     request.session['association_id'] = association.id
     messages.success(request, f"Vous administrez maintenant : {association.nom}")
