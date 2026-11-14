@@ -30,8 +30,14 @@ def get_assoc_id(request):
 def get_logo_base64(request):
     try:
         from cotisations.models import Parametre
-        # ⬇️ On prend le logo de l'association active
+        # On prend le logo de l'association active
         parametre = Parametre.objects.filter(association_id=get_assoc_id(request)).first()
+        
+        # ⬇️ NOUVEAU : Priorité au logo stocké en texte (Base64) dans la base de données
+        if parametre and parametre.logo_base64:
+            return parametre.logo_base64
+
+        # Sinon, on cherche le fichier physique (ancienne méthode)
         if parametre and parametre.logo:
             logo_path = parametre.logo.path
         else:

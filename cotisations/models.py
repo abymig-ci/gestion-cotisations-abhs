@@ -34,7 +34,7 @@ class Cotisation(models.Model):
         (9, 'Septembre'), (10, 'Octobre'), (11, 'Novembre'), (12, 'Décembre'),
     ]
 
-    # ⬇️ NOUVEAU : Lien avec l'association
+    # ⬇️ Lien avec l'association
     association = models.ForeignKey(
         Association, on_delete=models.CASCADE,
         related_name='cotisations',
@@ -83,7 +83,7 @@ class Cotisation(models.Model):
 
 
 class Parametre(models.Model):
-    # ⬇️ NOUVEAU : Lien avec l'association (1 seul paramètre par asso)
+    # ⬇️ Lien avec l'association (1 seul paramètre par asso)
     association = models.OneToOneField(
         Association, on_delete=models.CASCADE,
         related_name='parametre',
@@ -94,6 +94,13 @@ class Parametre(models.Model):
     logo = models.ImageField(
         upload_to='logos/', blank=True, null=True,
         verbose_name="Logo de l'association"
+    )
+    
+    # ⬇️ NOUVEAU CHAMP : Stockage permanent du logo en texte (Base64)
+    logo_base64 = models.TextField(
+        blank=True, 
+        null=True, 
+        help_text="Stockage permanent du logo pour Render (base64)"
     )
     
     nom_association = models.CharField(

@@ -35,6 +35,12 @@ def get_logo_base64(request):
     try:
         # On prend le logo de l'association active
         parametre = Parametre.objects.filter(association_id=get_assoc_id(request)).first()
+        
+        # ⬇️ NOUVEAU : Priorité au logo stocké en texte dans la base de données
+        if parametre and parametre.logo_base64:
+            return parametre.logo_base64
+
+        # Sinon, on cherche le fichier physique (ancienne méthode)
         if parametre and parametre.logo:
             logo_path = parametre.logo.path
         else:
@@ -387,7 +393,18 @@ def parametres(request):
     if request.method == 'POST':
         form = ParametreForm(request.POST, request.FILES, instance=parametre)
         if form.is_valid():
-            form.save()
+            instance = form.save(commit=False)
+            
+            # ⬇️ CONVERSION EN BASE64 (Pour que le logo persiste sur Render)
+            logo_file = request.FILES.get('logo')
+            if logo_file:
+                # On lit le fichier et on le convertit en texte
+                encoded_string = base64.b64encode(logo_file.read()).decode('utf-8')
+                mime_type = logo_file.content_type 
+                # On sauvegarde la chaîne dans le nouveau champ
+                instance.logo_base64 = f"data:{mime_type};base64,{encoded_string}"
+            
+            instance.save()
             messages.success(request, "Paramètres enregistrés avec succès.")
             return redirect('parametres')
     else:
