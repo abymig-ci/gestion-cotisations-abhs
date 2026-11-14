@@ -22,7 +22,9 @@
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            {% if parametre_global and parametre_global.logo %}
+            {% if parametre_global and parametre_global.logo_base64 %}
+                <img src="{{ parametre_global.logo_base64 }}" alt="Logo">
+            {% elif parametre_global and parametre_global.logo %}
                 <img src="{{ parametre_global.logo.url }}" alt="Logo">
             {% else %}
                 <img src="{% static 'img/logo.png' %}" alt="Logo A.B H.S">
@@ -37,7 +39,7 @@
             </h5>
             
             <!-- BOUTON CHANGER D'ASSOCIATION -->
-            {% if association_active_id %}
+            {% if association_active_id and user.is_superuser %}
                 <a href="{% url 'choisir_association' %}" class="btn btn-sm btn-outline-light mt-2 w-100">
                     <i class="bi bi-arrow-repeat"></i> Changer d'association
                 </a>
