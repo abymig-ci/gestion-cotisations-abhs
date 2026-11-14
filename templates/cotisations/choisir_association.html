@@ -3,10 +3,14 @@
 {% block page_title %}Choisir une association{% endblock %}
 
 {% block content %}
+<style>
+    /* Sur cette page, on ne garde dans le menu bleu que « Déconnexion » */
+    .sidebar-header,
+    .sidebar-menu { display: none !important; }
+</style>
+
 <div class="row justify-content-center mt-5">
     <div class="col-lg-6">
-        <h2 class="mb-4 text-primary fw-bold">Choisir une association</h2>
-        
         {% for assoc in associations %}
         <div class="d-flex align-items-center gap-3 mb-3">
             <!-- Bouton principal : lien mis à jour -->
