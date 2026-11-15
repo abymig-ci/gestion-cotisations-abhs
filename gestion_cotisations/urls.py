@@ -18,7 +18,7 @@ urlpatterns = [
     path('pwa/service-worker.js', pwa.service_worker, name='pwa_service_worker'),
     path('pwa/icon-<int:taille>.png', pwa.icone, name='pwa_icone'),
     path('pwa/icon-maskable-<int:taille>.png', pwa.icone_maskable, name='pwa_icone_maskable'),
-    path('au-revoir/', TemplateView.as_view(template_name='registration/au_revoir.html'), name='au_revoir'),
+    path('au-revoir/', pwa.au_revoir, name='au_revoir'),
     path('a/<slug:code>/', pwa.AccueilAssociationView.as_view(), name='accueil_association'),
     path('pwa/<slug:code>/manifest.json', pwa.manifest_association, name='pwa_manifest_association'),
     path('pwa/<slug:code>/icon-<int:taille>.png', pwa.icone_association, name='pwa_icone_association'),

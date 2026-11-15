@@ -141,6 +141,7 @@
             <div class="mb-3">{% include 'pwa_bouton.html' with classe='btn btn-sm btn-outline-light w-100' %}</div>
             <form method="post" action="{% url 'logout' %}" class="m-0">
                 {% csrf_token %}
+                {% if request.pwa_code %}<input type="hidden" name="next" value="{% url 'accueil_association' request.pwa_code %}">{% endif %}
                 <button type="submit" class="btn btn-link text-white text-decoration-none d-flex align-items-center gap-2 p-0 border-0">
                     <i class="bi bi-box-arrow-right"></i> Déconnexion
                 </button>
@@ -148,7 +149,7 @@
             <!-- QUITTER : déconnecte puis affiche la page d'au revoir (qui tente de fermer la fenêtre) -->
             <form method="post" action="{% url 'logout' %}" class="m-0 mt-3" onsubmit="return confirm('Quitter l\'application ? Vous serez déconnecté.');">
                 {% csrf_token %}
-                <input type="hidden" name="next" value="{% url 'au_revoir' %}">
+                <input type="hidden" name="next" value="{% url 'au_revoir' %}{% if request.pwa_code %}?code={{ request.pwa_code }}{% endif %}">
                 <button type="submit" class="btn btn-link text-white text-decoration-none d-flex align-items-center gap-2 p-0 border-0">
                     <i class="bi bi-power"></i> Quitter l'application
                 </button>

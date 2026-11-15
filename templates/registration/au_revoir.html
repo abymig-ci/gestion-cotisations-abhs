@@ -23,8 +23,9 @@
 </head>
 <body>
     <div class="carte-aurevoir">
-        <img src="{% static 'img/logo.png' %}" alt="Logo">
-        <h4 class="fw-bold text-dark mb-2">À bientôt !</h4>
+        <img src="{% if accueil_logo %}{{ accueil_logo }}{% else %}{% static 'img/logo.png' %}{% endif %}" alt="Logo">
+        <h4 class="fw-bold text-dark mb-1">À bientôt !</h4>
+        {% if accueil_nom %}<p class="small fw-bold text-muted mb-2">{{ accueil_nom }}</p>{% endif %}
         <p class="text-muted mb-4">Vous êtes déconnecté.</p>
 
         <!-- Ordinateur : on peut proposer de fermer la fenêtre -->
@@ -41,7 +42,7 @@
             </div>
         </div>
 
-        <a href="{% url 'login' %}" class="btn btn-primary w-100"><i class="bi bi-box-arrow-in-right"></i> Se reconnecter</a>
+        <a href="{% if pwa_code %}{% url 'accueil_association' pwa_code %}{% else %}{% url 'login' %}{% endif %}" class="btn btn-primary w-100"><i class="bi bi-box-arrow-in-right"></i> Se reconnecter</a>
     </div>
     <script>
         var tactile = window.matchMedia('(pointer: coarse)').matches || /android|iphone|ipad|ipod/i.test(navigator.userAgent);

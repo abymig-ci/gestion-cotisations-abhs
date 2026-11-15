@@ -6,7 +6,7 @@ from functools import lru_cache
 
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 
 from .connexion import ConnexionView
 from .models import Association, Parametre
@@ -193,3 +193,19 @@ class AccueilAssociationView(ConnexionView):
             "accueil_logo": param.logo_base64 if param and param.logo_base64 else None,
         })
         return contexte
+
+
+# ---------------------------------------------------- page « À bientôt » après « Quitter »
+def au_revoir(request):
+    """Page affichée après « Quitter l'application » ; aux couleurs de l'association si ?code=... est fourni."""
+    contexte = {}
+    code = (request.GET.get("code") or "").strip().lower()
+    assoc = Association.objects.filter(code=code, est_active=True).first() if code else None
+    if assoc:
+        param = Parametre.objects.filter(association=assoc).first()
+        contexte = {
+            "pwa_code": assoc.code,
+            "accueil_nom": (param.nom_association if param and param.nom_association else assoc.nom),
+            "accueil_logo": param.logo_base64 if param and param.logo_base64 else None,
+        }
+    return render(request, "registration/au_revoir.html", contexte)
