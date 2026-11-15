@@ -486,16 +486,18 @@ def detail_motif_exceptionnel(request, libelle):
 
 @check_acces('acces_cotisations')
 def liste_motifs_exceptionnels_pdf(request):
-    libelles = Cotisation.objects.filter(
+    libelles_bruts = Cotisation.objects.filter(
         association_id=get_assoc_id(request),
         type_cotisation='exceptionnelle'
-    ).values_list('libelle', flat=True).distinct()
-    
+    ).order_by().values_list('libelle', flat=True)  # order_by() vide : sinon l'ordre par défaut crée des doublons
+
+    libelles = set()
+    for libelle in libelles_bruts:
+        if libelle and libelle.strip():
+            libelles.add(libelle.strip())
+
     motifs = []
     for libelle in libelles:
-        if not libelle:
-            continue
-            
         cotisations_du_motif = Cotisation.objects.filter(
             association_id=get_assoc_id(request),
             type_cotisation='exceptionnelle', libelle=libelle
@@ -515,7 +517,7 @@ def liste_motifs_exceptionnels_pdf(request):
             'nb_total': nb_total,
         })
     
-    motifs = sorted(motifs, key=lambda x: x['libelle'])
+    motifs = sorted(motifs, key=lambda x: x['libelle'].lower())
 
     # ⬇️ RÉCUPÉRATION DE L'ASSOCIATION ACTIVE
     assoc_active = Association.objects.filter(id=get_assoc_id(request)).first()
