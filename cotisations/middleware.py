@@ -3,7 +3,8 @@ from django.shortcuts import redirect
 from membres.models import Membre
 
 # Adresses accessibles au super utilisateur même sans association choisie
-ADRESSES_LIBRES = ('/login/', '/logout/', '/choisir-association/', '/admin/', '/static/', '/media/', '/favicon.ico')
+# ('/pwa/' : fichiers d'installation de l'application sur l'écran d'accueil)
+ADRESSES_LIBRES = ('/login/', '/logout/', '/choisir-association/', '/admin/', '/static/', '/media/', '/favicon.ico', '/pwa/')
 
 
 class AssociationDuMembreMiddleware:

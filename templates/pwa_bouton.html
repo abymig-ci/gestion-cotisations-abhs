@@ -1,0 +1,46 @@
+{# Bouton « Installer l'application ». Usage : {% include 'pwa_bouton.html' with classe='btn btn-outline-primary w-100' %} #}
+<button type="button" data-pwa-install class="{{ classe|default:'btn btn-outline-primary' }} d-none">
+    <i class="bi bi-download"></i> Installer l'application
+</button>
+<script>
+(function () {
+    if (window.__pwaInit) { return; }
+    window.__pwaInit = true;
+
+    // Enregistrement du service worker (nécessaire pour l'installation)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/pwa/service-worker.js', { scope: '/' }).catch(function () {});
+    }
+
+    var evenementInstall = null;
+    var enApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+    function boutons() { return document.querySelectorAll('[data-pwa-install]'); }
+    function afficher(oui) {
+        boutons().forEach(function (b) { b.classList.toggle('d-none', !oui); });
+    }
+
+    // Déjà installée (ouverte comme une application) : on n'affiche pas le bouton
+    if (!enApp) { document.addEventListener('DOMContentLoaded', function () { afficher(true); }); }
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        evenementInstall = e;
+    });
+    window.addEventListener('appinstalled', function () { afficher(false); });
+
+    document.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-pwa-install]');
+        if (!b) { return; }
+        if (evenementInstall) {
+            evenementInstall.prompt();
+            evenementInstall.userChoice.then(function () { evenementInstall = null; });
+        } else if (ios) {
+            alert("Sur iPhone / iPad (Safari) : touchez le bouton Partager, puis « Sur l'écran d'accueil ».");
+        } else {
+            alert("Ouvrez le menu de votre navigateur (⋮ ou ⋯), puis choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil ».");
+        }
+    });
+})();
+</script>

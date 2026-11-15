@@ -4,6 +4,7 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 from cotisations.connexion import ConnexionView
+from cotisations import pwa
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -12,6 +13,10 @@ urlpatterns = [
     path('', include('cotisations.urls')),
     path('membres/', include('membres.urls')),
     path('depenses/', include('depenses.urls')),
+    path('pwa/manifest.json', pwa.manifest, name='pwa_manifest'),
+    path('pwa/service-worker.js', pwa.service_worker, name='pwa_service_worker'),
+    path('pwa/icon-<int:taille>.png', pwa.icone, name='pwa_icone'),
+    path('pwa/icon-maskable-<int:taille>.png', pwa.icone_maskable, name='pwa_icone_maskable'),
 ]
 
 # Configuration pour servir les fichiers médias (uploads) en développement
