@@ -471,9 +471,17 @@ def detail_motif_exceptionnel(request, libelle):
         libelle=libelle
     ).select_related('membre').order_by('membre__nom', 'membre__prenom')
     
+    # Les compteurs portent toujours sur TOUS les membres du motif
     total_collecte = cotisations.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
     nb_payes = cotisations.filter(statut='payee').count()
     nb_impayes = cotisations.filter(statut='en_attente').count()
+
+    # Filtre de la liste : ?statut=payee ou ?statut=en_attente
+    statut_filter = request.GET.get('statut', '')
+    if statut_filter in ('payee', 'en_attente'):
+        cotisations = cotisations.filter(statut=statut_filter)
+    else:
+        statut_filter = ''
     
     return render(request, 'cotisations/detail_motif_exceptionnel.html', {
         'libelle': libelle,
@@ -481,6 +489,7 @@ def detail_motif_exceptionnel(request, libelle):
         'total_collecte': total_collecte,
         'nb_payes': nb_payes,
         'nb_impayes': nb_impayes,
+        'statut_filter': statut_filter,
     })
 
 
@@ -550,11 +559,22 @@ def detail_motif_exceptionnel_pdf(request, libelle):
     nb_payes = cotisations.filter(statut='payee').count()
     nb_impayes = cotisations.filter(statut='en_attente').count()
 
+    # Même filtre que l'écran : ?statut=payee ou ?statut=en_attente
+    statut_filter = request.GET.get('statut', '')
+    filtre_label = ''
+    if statut_filter == 'payee':
+        cotisations = cotisations.filter(statut='payee')
+        filtre_label = 'Membres ayant payé'
+    elif statut_filter == 'en_attente':
+        cotisations = cotisations.filter(statut='en_attente')
+        filtre_label = 'Membres en attente de paiement'
+
     # ⬇️ RÉCUPÉRATION DE L'ASSOCIATION ACTIVE
     assoc_active = Association.objects.filter(id=get_assoc_id(request)).first()
 
     html_string = render_to_string('cotisations/detail_motif_exceptionnel_pdf.html', {
         'libelle': libelle,
+        'filtre_label': filtre_label,
         'cotisations': cotisations,
         'total_collecte': total_collecte,
         'nb_payes': nb_payes,
