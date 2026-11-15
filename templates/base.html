@@ -138,7 +138,6 @@
             {% endif %}
         </ul>
         <div class="sidebar-footer">
-            <div class="mb-3">{% include 'pwa_bouton.html' with classe='btn btn-sm btn-outline-light w-100' %}</div>
             <form method="post" action="{% url 'logout' %}" class="m-0">
                 {% csrf_token %}
                 {% if request.pwa_code %}<input type="hidden" name="next" value="{% url 'accueil_association' request.pwa_code %}">{% endif %}
