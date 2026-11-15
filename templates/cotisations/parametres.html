@@ -30,12 +30,16 @@
                             <div class="text-danger small mt-1 fw-medium">{{ field.errors.0 }}</div>
                         {% endif %}
                         
-                        <!-- AFFICHAGE DU LOGO ACTUEL -->
-                        {% if field.name == 'logo' and form.instance.logo %}
-                            <div class="mt-3">
-                                <p class="small text-muted mb-1">Logo actuel :</p>
-                                <img src="{{ form.instance.logo.url }}" alt="Logo actuel" style="max-width: 100px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                            </div>
+                        <!-- AFFICHAGE DU LOGO ACTUEL (copie enregistrée en base : elle ne disparaît pas au redéploiement) -->
+                        {% if field.name == 'logo' %}
+                            {% if form.instance.logo_base64 %}
+                                <div class="mt-3">
+                                    <p class="small text-muted mb-1">Logo actuel :</p>
+                                    <img src="{{ form.instance.logo_base64 }}" alt="Logo actuel" style="max-width: 100px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                </div>
+                            {% else %}
+                                <p class="small text-warning mt-2 mb-0">Aucun logo enregistré. Choisissez un fichier puis enregistrez.</p>
+                            {% endif %}
                         {% endif %}
                     </div>
                     {% endfor %}
