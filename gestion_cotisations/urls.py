@@ -5,6 +5,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from cotisations.connexion import ConnexionView
 from cotisations import pwa
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -17,6 +18,7 @@ urlpatterns = [
     path('pwa/service-worker.js', pwa.service_worker, name='pwa_service_worker'),
     path('pwa/icon-<int:taille>.png', pwa.icone, name='pwa_icone'),
     path('pwa/icon-maskable-<int:taille>.png', pwa.icone_maskable, name='pwa_icone_maskable'),
+    path('au-revoir/', TemplateView.as_view(template_name='registration/au_revoir.html'), name='au_revoir'),
 ]
 
 # Configuration pour servir les fichiers médias (uploads) en développement
