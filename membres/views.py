@@ -50,6 +50,16 @@ def get_logo_base64(request):
         return ""
 
 
+# Correspondance entre le filtre « statut » et la mention affichée dans la colonne « Statut Cotisation »
+STATUTS_COTISATION = {
+    'jour': 'À jour',
+    'retard': 'En retard',
+    'carence': 'En carence',
+    'inactif': 'Inactif',
+    'suspendu': 'Suspendu',
+}
+
+
 # --- DÉCORATEURS DE SÉCURITÉ ---
 def admin_required(view_func):
     @login_required
@@ -85,29 +95,47 @@ def check_acces(acces_name):
 
 @check_acces('acces_membres')
 def liste_membres(request):
-    groupe_id = request.GET.get('groupe')
+    assoc_id = get_assoc_id(request)
+    groupe_filter = request.GET.get('groupe', '')
     poste_id = request.GET.get('poste')
-    statut_filter = request.GET.get('statut')
-    
+    statut_filter = request.GET.get('statut', '')
+
+    STATUTS = STATUTS_COTISATION
+
     # ⬇️ FILTRE PAR ASSOCIATION ⬇️
-    membres = Membre.objects.filter(association_id=get_assoc_id(request)).select_related('poste', 'groupe').annotate(
+    membres = Membre.objects.filter(association_id=assoc_id).select_related('poste', 'groupe').annotate(
         nb_cotisations=Count('cotisations'),
         total_paye=Sum('cotisations__montant', filter=Q(cotisations__statut='payee'))
     )
-    
-    if groupe_id:
-        membres = membres.filter(groupe_id=groupe_id)
+
+    # Filtre par groupe (un numéro de groupe, ou « aucun » pour les membres sans groupe)
+    if groupe_filter == 'aucun':
+        membres = membres.filter(groupe__isnull=True)
+    elif groupe_filter.isdigit():
+        membres = membres.filter(groupe_id=int(groupe_filter))
+    else:
+        groupe_filter = ''
+
     if poste_id:
         membres = membres.filter(poste_id=poste_id)
-    
-    if statut_filter == 'non_a_jour':
+
+    # Filtre par statut de cotisation
+    if statut_filter == 'non_a_jour':      # ancien lien (tableau de bord) : membres en retard
         membres = [m for m in membres if m.statut_cotisation == "En retard"]
-    elif statut_filter == 'a_jour':
+    elif statut_filter == 'a_jour':        # ancien lien : tous ceux qui ne sont pas en retard
         membres = [m for m in membres if m.statut_cotisation != "En retard"]
-        
+    elif statut_filter in STATUTS:
+        membres = [m for m in membres if m.statut_cotisation == STATUTS[statut_filter]]
+    else:
+        statut_filter = ''
+
     return render(request, 'membres/liste.html', {
         'membres': membres,
+        'nb_membres': len(membres),
         'statut_filter': statut_filter,
+        'groupe_filter': groupe_filter,
+        'groupes': Groupe.objects.filter(association_id=assoc_id).order_by('nom'),
+        'statuts_choix': [(cle, libelle) for cle, libelle in STATUTS.items()],
     })
 
 
@@ -633,76 +661,99 @@ def definir_mot_de_passe(request, token):
 
 @admin_required
 def etat_cotisations_pdf(request):
-    # ⬇️ Filtre par association
-    groupes = Groupe.objects.filter(association_id=get_assoc_id(request)).order_by('nom')
+    assoc_id = get_assoc_id(request)
+
+    # Mêmes filtres que la page « Nos Membres » : ?groupe=<id|aucun>&statut=<...>
+    groupe_filter = request.GET.get('groupe', '')
+    statut_filter = request.GET.get('statut', '')
+
+    def garde(membre):
+        s = membre.statut_cotisation
+        if statut_filter == 'non_a_jour':
+            return s == 'En retard'
+        if statut_filter == 'a_jour':
+            return s != 'En retard'
+        if statut_filter in STATUTS_COTISATION:
+            return s == STATUTS_COTISATION[statut_filter]
+        return True
+
+    # Sans filtre, l'état ne contient que les membres actifs ; les filtres Inactif / Suspendu les incluent
+    if statut_filter in ('inactif', 'suspendu'):
+        base_membres = Membre.objects.filter(association_id=assoc_id, statut=statut_filter)
+    else:
+        base_membres = Membre.objects.filter(association_id=assoc_id, statut='actif')
+
+    def ligne(membre):
+        derniere_mensuelle = membre.cotisations.filter(
+            type_cotisation='mensuelle', statut='payee'
+        ).order_by('-annee', '-mois').first()
+        total_paye = membre.cotisations.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
+        exceptionnelles_impayees = membre.cotisations.filter(
+            type_cotisation='exceptionnelle', statut='en_attente'
+        )
+        return {
+            'membre': membre,
+            'derniere_mensuelle': derniere_mensuelle,
+            'total_paye': total_paye,
+            'exceptionnelles_impayees': exceptionnelles_impayees,
+        }
+
+    # ⬇️ Filtre par association (et par groupe si demandé)
+    groupes = Groupe.objects.filter(association_id=assoc_id).order_by('nom')
+    libelle_groupe = ''
+    if groupe_filter.isdigit():
+        groupes = groupes.filter(pk=int(groupe_filter))
+        g = groupes.first()
+        libelle_groupe = g.nom if g else ''
+    elif groupe_filter == 'aucun':
+        groupes = groupes.none()
+        libelle_groupe = 'Sans groupe'
+    else:
+        groupe_filter = ''
+
     etat_par_groupe = []
-    
     for groupe in groupes:
-        membres_du_groupe = Membre.objects.filter(
-            association_id=get_assoc_id(request),
-            statut='actif', groupe=groupe
-        ).select_related('poste').order_by('nom', 'prenom')
-        
-        liste_membres = []
-        for membre in membres_du_groupe:
-            derniere_mensuelle = membre.cotisations.filter(
-                type_cotisation='mensuelle', statut='payee'
-            ).order_by('-annee', '-mois').first()
-            
-            total_paye = membre.cotisations.filter(statut='payee').aggregate(
-                total=Sum('montant')
-            )['total'] or 0
-            
-            exceptionnelles_impayees = membre.cotisations.filter(
-                type_cotisation='exceptionnelle', statut='en_attente'
-            )
-            
-            liste_membres.append({
-                'membre': membre,
-                'derniere_mensuelle': derniere_mensuelle,
-                'total_paye': total_paye,
-                'exceptionnelles_impayees': exceptionnelles_impayees,
-            })
-        
+        membres_du_groupe = base_membres.filter(groupe=groupe).select_related('poste').order_by('nom', 'prenom')
+        liste_membres = [ligne(m) for m in membres_du_groupe if garde(m)]
         if liste_membres:
             etat_par_groupe.append({
                 'groupe': groupe,
                 'membres': liste_membres,
                 'total_groupe': sum(m['total_paye'] for m in liste_membres)
             })
-    
-    membres_sans_groupe = Membre.objects.filter(
-        association_id=get_assoc_id(request),
-        statut='actif', groupe__isnull=True
-    ).select_related('poste').order_by('nom', 'prenom')
-    
-    if membres_sans_groupe.exists():
-        liste_sans_groupe = []
-        for membre in membres_sans_groupe:
-            derniere_mensuelle = membre.cotisations.filter(type_cotisation='mensuelle', statut='payee').order_by('-annee', '-mois').first()
-            total_paye = membre.cotisations.filter(statut='payee').aggregate(total=Sum('montant'))['total'] or 0
-            exceptionnelles_impayees = membre.cotisations.filter(type_cotisation='exceptionnelle', statut='en_attente')
-            liste_sans_groupe.append({
-                'membre': membre,
-                'derniere_mensuelle': derniere_mensuelle,
-                'total_paye': total_paye,
-                'exceptionnelles_impayees': exceptionnelles_impayees,
+
+    if groupe_filter in ('', 'aucun'):
+        membres_sans_groupe = base_membres.filter(groupe__isnull=True).select_related('poste').order_by('nom', 'prenom')
+        liste_sans_groupe = [ligne(m) for m in membres_sans_groupe if garde(m)]
+        if liste_sans_groupe:
+            etat_par_groupe.append({
+                'groupe': None,
+                'membres': liste_sans_groupe,
+                'total_groupe': sum(m['total_paye'] for m in liste_sans_groupe)
             })
-        etat_par_groupe.append({
-            'groupe': None,
-            'membres': liste_sans_groupe,
-            'total_groupe': sum(m['total_paye'] for m in liste_sans_groupe)
-        })
+
+    # Texte indiquant le filtre sur l'imprimé
+    parties = []
+    if libelle_groupe:
+        parties.append(f"Groupe : {libelle_groupe}")
+    if statut_filter == 'non_a_jour':
+        parties.append("Statut : En retard")
+    elif statut_filter == 'a_jour':
+        parties.append("Statut : Pas en retard")
+    elif statut_filter in STATUTS_COTISATION:
+        parties.append(f"Statut : {STATUTS_COTISATION[statut_filter]}")
+    filtre_label = " — ".join(parties)
 
     # ⬇️ NOUVEAU : On récupère l'association active pour le PDF
     from cotisations.models import Association
-    assoc_active = Association.objects.filter(id=get_assoc_id(request)).first()
+    assoc_active = Association.objects.filter(id=assoc_id).first()
 
     html_string = render_to_string('membres/etat_cotisations_pdf.html', {
         'etat_par_groupe': etat_par_groupe,
         'today': timezone.now().date(),
-        'logo_base64': get_logo_base64(request), # ⬅️ On passe request
-        'nom_association': assoc_active.nom if assoc_active else "Nom de l'association", # ⬅️ NOUVEAU
+        'logo_base64': get_logo_base64(request),
+        'nom_association': assoc_active.nom if assoc_active else "Nom de l'association",
+        'filtre_label': filtre_label,
     })
 
     html = HTML(string=html_string)

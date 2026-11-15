@@ -94,6 +94,7 @@
         <!-- ⬇️ On utilise la variable passée par la vue -->
         <h1>{{ nom_association }}</h1>
         <p>État des cotisations au {{ today|date:"d/m/Y" }}</p>
+        {% if filtre_label %}<p><strong>Liste filtrée : {{ filtre_label }}</strong></p>{% endif %}
     </div>
 
     {% for item in etat_par_groupe %}
@@ -130,6 +131,8 @@
             </tbody>
         </table>
         <div class="total-groupe">Total collecté : {{ item.total_groupe|floatformat:0 }} FCFA</div>
+    {% empty %}
+        <p style="text-align:center; color:#64748b; margin-top:30px;">Aucun membre ne correspond à ce filtre.</p>
     {% endfor %}
 </body>
 </html>

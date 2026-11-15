@@ -20,18 +20,11 @@
 </div>
 {% endif %}
 
-{% if groupe_actuel %}
-<div class="alert alert-info shadow-sm border-0 mb-4" style="background-color: #e0e7ff; color: #0a1c5c;">
-    <i class="bi bi-funnel-fill me-2"></i> Vous consultez actuellement les membres du groupe : <strong>{{ groupe_actuel.nom }}</strong>
-    <a href="{% url 'liste_membres' %}" class="btn btn-sm btn-outline-primary float-end ms-3">Voir tous les membres</a>
-</div>
-{% endif %}
-
 <div class="d-flex justify-content-between align-items-center mb-4">
     <p class="text-muted mb-0">Gérez la liste des biologistes membres de l'association.</p>
     <div class="d-flex gap-2">
-        <!-- BOUTON D'IMPRESSION CORRIGÉ -->
-        <a href="{% url 'etat_cotisations_pdf' %}" target="_blank" class="btn btn-outline-dark">
+        <!-- BOUTON D'IMPRESSION (respecte les filtres actifs) -->
+        <a href="{% url 'etat_cotisations_pdf' %}{% if groupe_filter or statut_filter %}?{% if groupe_filter %}groupe={{ groupe_filter }}{% endif %}{% if groupe_filter and statut_filter %}&{% endif %}{% if statut_filter %}statut={{ statut_filter }}{% endif %}{% endif %}" target="_blank" class="btn btn-outline-dark">
             <i class="bi bi-printer"></i> Imprimer l'état (PDF)
         </a>
         <a href="{% url 'ajouter_membre' %}" class="btn-primary-custom">
@@ -39,6 +32,37 @@
         </a>
     </div>
 </div>
+
+<!-- FILTRES : GROUPE ET STATUT -->
+<form method="get" class="card-custom mb-4 py-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small fw-bold text-dark mb-1" for="filtre_groupe">Groupe</label>
+            <select name="groupe" id="filtre_groupe" class="form-select" onchange="this.form.submit()">
+                <option value="">Tous les groupes</option>
+                {% for g in groupes %}
+                    <option value="{{ g.pk }}" {% if groupe_filter == g.pk|stringformat:"s" %}selected{% endif %}>{{ g.nom }}</option>
+                {% endfor %}
+                <option value="aucun" {% if groupe_filter == 'aucun' %}selected{% endif %}>Sans groupe</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small fw-bold text-dark mb-1" for="filtre_statut">Statut de cotisation</label>
+            <select name="statut" id="filtre_statut" class="form-select" onchange="this.form.submit()">
+                <option value="">Tous les statuts</option>
+                {% for cle, libelle in statuts_choix %}
+                    <option value="{{ cle }}" {% if statut_filter == cle %}selected{% endif %}>{{ libelle }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-center justify-content-between gap-2">
+            <span class="text-muted small"><strong>{{ nb_membres }}</strong> membre{{ nb_membres|pluralize }}</span>
+            {% if groupe_filter or statut_filter %}
+                <a href="{% url 'liste_membres' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-circle"></i> Réinitialiser</a>
+            {% endif %}
+        </div>
+    </div>
+</form>
 
 <div class="card-custom">
     <div class="table-responsive">
