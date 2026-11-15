@@ -1,9 +1,11 @@
-<!-- INSTALLATION SUR L'ÉCRAN D'ACCUEIL (PWA) -->
-<link rel="manifest" href="/pwa/manifest.json">
+{# INSTALLATION SUR L'ÉCRAN D'ACCUEIL (PWA) : version de l'association si on la connaît, sinon version générale #}
+{% with code=pwa_code|default:request.pwa_code %}
+<link rel="manifest" href="{% if code %}/pwa/{{ code }}/manifest.json{% else %}/pwa/manifest.json{% endif %}">
 <meta name="theme-color" content="#0a1c5c">
-<meta name="application-name" content="Gestcotis">
+<meta name="application-name" content="Gestcotis{% if code %}-{{ code }}{% endif %}">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Gestcotis">
-<link rel="apple-touch-icon" href="/pwa/icon-180.png">
-<link rel="icon" type="image/png" sizes="192x192" href="/pwa/icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Gestcotis{% if code %}-{{ code }}{% endif %}">
+<link rel="apple-touch-icon" href="{% if code %}/pwa/{{ code }}/icon-180.png{% else %}/pwa/icon-180.png{% endif %}">
+<link rel="icon" type="image/png" sizes="192x192" href="{% if code %}/pwa/{{ code }}/icon-192.png{% else %}/pwa/icon-192.png{% endif %}">
+{% endwith %}
