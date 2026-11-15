@@ -8,10 +8,20 @@ class Association(models.Model):
     logo = models.ImageField(upload_to='logos_associations/', blank=True, null=True)
     couleur_principale = models.CharField(max_length=7, default="#0a1c5c")
     est_active = models.BooleanField(default=True)
+    code = models.SlugField(
+        max_length=30, unique=True, null=True, blank=True,
+        verbose_name="Code court",
+        help_text="Abrégé en minuscules, sans espace (ex : abhs, arda). Sert au lien d'installation et au nom du raccourci : Gestcotis-abhs."
+    )
 
     class Meta:
         verbose_name = "Association"
         verbose_name_plural = "Associations"
+
+    def save(self, *args, **kwargs):
+        # Le code est toujours enregistré en minuscules ; vide = pas de code
+        self.code = (self.code or '').strip().lower() or None
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.nom
