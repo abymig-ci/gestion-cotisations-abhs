@@ -173,7 +173,10 @@ def detail_membre(request, pk):
     membre = get_object_or_404(Membre.objects.select_related('poste', 'groupe'), pk=pk)
     
     if not request.user.is_superuser:
-        if not hasattr(request.user, 'membre_profil') or request.user.membre_profil.pk != membre.pk:
+        est_son_profil = hasattr(request.user, 'membre_profil') and request.user.membre_profil.pk == membre.pk
+        # Un utilisateur ayant l'accès « Gérer les membres » voit les profils de SON association seulement
+        peut_gerer = has_acces(request.user, 'acces_membres') and membre.association_id == get_assoc_id(request)
+        if not (est_son_profil or peut_gerer):
             raise PermissionDenied
 
     cotisations = membre.cotisations.all()
