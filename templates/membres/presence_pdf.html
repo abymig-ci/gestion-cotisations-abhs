@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 1.5cm;
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-family: 'Helvetica', 'Arial', sans-serif;
+                font-size: 9pt;
+                color: #64748b;
+            }
+        }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10pt; color: #1e293b; }
+        .header { text-align: center; border-bottom: 2px solid #0a1c5c; padding-bottom: 10px; margin-bottom: 15px; }
+        .header img { max-width: 80px; margin-bottom: 10px; border-radius: 50%; }
+        .header h1 { margin: 0; color: #0a1c5c; font-size: 16pt; }
+        .header p { margin: 5px 0 0; color: #64748b; font-size: 9pt; }
+        .reunion { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px 12px; margin-bottom: 12px; font-size: 10pt; }
+        .resume { margin-bottom: 10px; font-weight: bold; }
+        .titre-section { background: #0a1c5c; color: white; padding: 5px 10px; font-weight: bold; margin-top: 18px; margin-bottom: 5px; border-radius: 4px; font-size: 11pt; break-after: avoid; page-break-after: avoid; }
+        .titre-absents { background: #991b1b; }
+        table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+        th { background: #f1f5f9; text-align: left; padding: 6px; border: 1px solid #cbd5e1; }
+        td { padding: 6px; border: 1px solid #cbd5e1; }
+        thead { display: table-header-group; }
+        tr { page-break-inside: avoid; break-inside: avoid; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if logo_base64 %}
+            <img src="{{ logo_base64 }}" alt="Logo">
+        {% else %}
+            <img src="{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo.png' %}" alt="Logo">
+        {% endif %}
+        <h1>{{ nom_association }}</h1>
+        <p>Liste de présence</p>
+    </div>
+
+    <div class="reunion">
+        <strong>{{ reunion.titre }}</strong><br>
+        {{ reunion.date_reunion|date:"d/m/Y à H:i" }} — {{ reunion.lieu }} — Groupe organisateur : {{ reunion.groupe.nom }}
+    </div>
+    <div class="resume">Présents : {{ presents|length }} &nbsp;|&nbsp; Absents : {{ absents|length }}</div>
+
+    <div class="titre-section">Présents ({{ presents|length }})</div>
+    <table>
+        <thead>
+            <tr><th style="width:30px;">N°</th><th>Nom & Prénom</th><th>Groupe</th><th>Poste</th></tr>
+        </thead>
+        <tbody>
+            {% for m in presents %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><strong>{{ m.nom|upper }} {{ m.prenom }}</strong></td>
+                <td>{{ m.groupe.nom|default:"—" }}</td>
+                <td>{{ m.poste.nom|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="text-align:center; color:#64748b;">Aucun présent enregistré.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="titre-section titre-absents">Absents ({{ absents|length }})</div>
+    <table>
+        <thead>
+            <tr><th style="width:30px;">N°</th><th>Nom & Prénom</th><th>Groupe</th><th>Poste</th></tr>
+        </thead>
+        <tbody>
+            {% for m in absents %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><strong>{{ m.nom|upper }} {{ m.prenom }}</strong></td>
+                <td>{{ m.groupe.nom|default:"—" }}</td>
+                <td>{{ m.poste.nom|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="text-align:center; color:#64748b;">Aucun absent.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

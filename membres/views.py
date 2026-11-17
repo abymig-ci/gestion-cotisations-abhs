@@ -17,7 +17,7 @@ from django.conf import settings
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
-from .models import Membre, Groupe, Poste, Reunion, ProfilAcces
+from .models import Membre, Groupe, Poste, Reunion, ProfilAcces, Presence
 from .forms import MembreForm, GroupeForm, PosteForm, ReunionForm, MesInformationsForm
 
 
@@ -242,8 +242,21 @@ def detail_membre(request, pk):
                         montant_assiste += montant_standard
     # -----------------------------
 
+    # Présences aux réunions
+    presences_membre = list(membre.presences.select_related('reunion').order_by('-reunion__date_reunion'))
+    nb_pointees = len(presences_membre)
+    nb_presentes = sum(1 for p in presences_membre if p.present)
+    stats_presence = {
+        'total': nb_pointees,
+        'presentes': nb_presentes,
+        'absentes': nb_pointees - nb_presentes,
+        'taux': round(100 * nb_presentes / nb_pointees) if nb_pointees else None,
+        'recentes': presences_membre[:10],
+    }
+
     return render(request, 'membres/detail.html', {
         'membre': membre,
+        'stats_presence': stats_presence,
         'cotisations': cotisations,
         'total': total,
         'montant_du': montant_du,
@@ -355,7 +368,10 @@ def modifier_poste(request, pk):
 @check_acces('acces_reunions')
 def liste_reunions(request):
     # ⬇️ Filtre par association
-    reunions = Reunion.objects.filter(association_id=get_assoc_id(request)).select_related('groupe').all()
+    reunions = Reunion.objects.filter(association_id=get_assoc_id(request)).select_related('groupe').annotate(
+        nb_presents=Count('presences', filter=Q(presences__present=True)),
+        nb_absents=Count('presences', filter=Q(presences__present=False)),
+    )
     return render(request, 'membres/liste_reunions.html', {'reunions': reunions})
 
 
@@ -386,6 +402,63 @@ def modifier_reunion(request, pk):
     else:
         form = ReunionForm(instance=reunion, association_id=reunion.association_id or get_assoc_id(request))
     return render(request, 'membres/form_reunion.html', {'form': form, 'titre': 'Modifier la réunion'})
+
+
+def _membres_pour_presence(reunion):
+    """Membres actifs de l'association + ceux déjà pointés (même devenus inactifs)."""
+    deja_pointes = reunion.presences.values_list('membre_id', flat=True)
+    return Membre.objects.filter(association_id=reunion.association_id).filter(
+        Q(statut='actif') | Q(pk__in=list(deja_pointes))
+    ).select_related('groupe', 'poste').order_by('nom', 'prenom')
+
+
+@check_acces('acces_reunions')
+def presence_reunion(request, pk):
+    reunion = get_object_or_404(Reunion, pk=pk, association_id=get_assoc_id(request))
+    membres = list(_membres_pour_presence(reunion))
+
+    if request.method == 'POST':
+        presents = set(request.POST.getlist('presents'))
+        for membre in membres:
+            Presence.objects.update_or_create(
+                reunion=reunion, membre=membre,
+                defaults={'present': str(membre.pk) in presents},
+            )
+        messages.success(request, f"Liste de présence enregistrée ({len(presents)} présent(s)).")
+        return redirect('presence_reunion', pk=reunion.pk)
+
+    deja = dict(reunion.presences.values_list('membre_id', 'present'))
+    lignes = [{'membre': m, 'present': deja.get(m.pk, False)} for m in membres]
+    return render(request, 'membres/presence_reunion.html', {
+        'reunion': reunion,
+        'lignes': lignes,
+        'nb_presents': sum(1 for l in lignes if l['present']),
+        'deja_enregistree': bool(deja),
+    })
+
+
+@check_acces('acces_reunions')
+def presence_reunion_pdf(request, pk):
+    from cotisations.models import Association
+    reunion = get_object_or_404(Reunion, pk=pk, association_id=get_assoc_id(request))
+    presences = reunion.presences.select_related('membre', 'membre__groupe', 'membre__poste').order_by(
+        'membre__nom', 'membre__prenom')
+    presents = [p.membre for p in presences if p.present]
+    absents = [p.membre for p in presences if not p.present]
+
+    assoc_active = Association.objects.filter(id=get_assoc_id(request)).first()
+    html_string = render_to_string('membres/presence_pdf.html', {
+        'reunion': reunion,
+        'presents': presents,
+        'absents': absents,
+        'today': timezone.now().date(),
+        'logo_base64': get_logo_base64(request),
+        'nom_association': assoc_active.nom if assoc_active else "Nom de l'association",
+    })
+    pdf = HTML(string=html_string).write_pdf()
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="liste_presence.pdf"'
+    return response
 
 
 @check_acces('acces_reunions')

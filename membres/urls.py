@@ -27,6 +27,8 @@ urlpatterns = [
     path('reunions/ajouter/', views.ajouter_reunion, name='ajouter_reunion'),
     path('reunions/<int:pk>/modifier/', views.modifier_reunion, name='modifier_reunion'),
     path('reunions/<int:pk>/supprimer/', views.supprimer_reunion, name='supprimer_reunion'),
+    path('reunions/<int:pk>/presence/', views.presence_reunion, name='presence_reunion'),
+    path('reunions/<int:pk>/presence/pdf/', views.presence_reunion_pdf, name='presence_reunion_pdf'),
     
     path('mon-espace/', views.mon_espace, name='mon_espace'),
     path('mes-informations/', views.mes_informations, name='mes_informations'),

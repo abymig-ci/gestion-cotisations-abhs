@@ -207,3 +207,24 @@ class ProfilAcces(models.Model):
 
     def __str__(self):
         return f"Accès de {self.utilisateur.username}"
+
+
+class Presence(models.Model):
+    """Présence d'un membre à une réunion (une ligne par membre pointé)."""
+    reunion = models.ForeignKey(
+        Reunion, on_delete=models.CASCADE, related_name='presences',
+        verbose_name="Réunion"
+    )
+    membre = models.ForeignKey(
+        Membre, on_delete=models.CASCADE, related_name='presences',
+        verbose_name="Membre"
+    )
+    present = models.BooleanField(default=False, verbose_name="Présent")
+
+    class Meta:
+        unique_together = [('reunion', 'membre')]
+        verbose_name = "Présence"
+        verbose_name_plural = "Présences"
+
+    def __str__(self):
+        return f"{self.membre} - {self.reunion} : {'présent' if self.present else 'absent'}"

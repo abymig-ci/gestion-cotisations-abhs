@@ -19,6 +19,7 @@
                     <th>Date & Heure</th>
                     <th>Lieu</th>
                     <th>Groupe</th>
+                    <th>Présence</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -29,7 +30,18 @@
                     <td>{{ r.date_reunion|date:"d/m/Y à H:i" }}</td>
                     <td class="text-muted"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ r.lieu }}</td>
                     <td><span class="badge bg-primary bg-opacity-10 text-primary">{{ r.groupe.nom }}</span></td>
+                    <td class="text-nowrap">
+                        {% if r.nb_presents or r.nb_absents %}
+                            <span class="badge bg-success">{{ r.nb_presents }} présent{{ r.nb_presents|pluralize }}</span>
+                            <span class="badge bg-danger">{{ r.nb_absents }} absent{{ r.nb_absents|pluralize }}</span>
+                        {% else %}
+                            <span class="text-muted small">Non pointée</span>
+                        {% endif %}
+                    </td>
                     <td class="text-end text-nowrap">
+                        <a href="{% url 'presence_reunion' r.pk %}" class="btn btn-sm btn-outline-success border-0 rounded-circle" title="Liste de présence" style="width:32px; height:32px; padding:5px;">
+                            <i class="bi bi-person-check"></i>
+                        </a>
                         <a href="{% url 'modifier_reunion' r.pk %}" class="btn btn-sm btn-outline-secondary border-0 rounded-circle" title="Modifier" style="width:32px; height:32px; padding:5px;">
                             <i class="bi bi-pencil"></i>
                         </a>
@@ -39,7 +51,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="text-center text-muted py-4">Aucune réunion programmée.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted py-4">Aucune réunion programmée.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

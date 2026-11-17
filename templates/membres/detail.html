@@ -170,6 +170,34 @@
     </div>
 </div>
 
+<!-- Présence aux réunions -->
+<div class="card-custom mt-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-person-check text-primary me-2"></i> Présence aux réunions</h5>
+    {% if stats_presence.total %}
+    <p class="mb-3">
+        <strong>{{ stats_presence.presentes }}</strong> présence(s) sur <strong>{{ stats_presence.total }}</strong> réunion(s) pointée(s)
+        — taux de présence : <strong>{{ stats_presence.taux }} %</strong>
+    </p>
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead><tr><th>Réunion</th><th>Date</th><th>Présence</th></tr></thead>
+            <tbody>
+                {% for p in stats_presence.recentes %}
+                <tr>
+                    <td class="fw-medium">{{ p.reunion.titre }}</td>
+                    <td class="text-muted">{{ p.reunion.date_reunion|date:"d/m/Y" }}</td>
+                    <td>{% if p.present %}<span class="badge-custom badge-success">Présent</span>{% else %}<span class="badge-custom badge-danger">Absent</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if stats_presence.total > 10 %}<p class="small text-muted mt-2 mb-0">Les 10 dernières réunions sont affichées.</p>{% endif %}
+    {% else %}
+    <p class="text-muted mb-0">Aucune liste de présence enregistrée pour ce membre.</p>
+    {% endif %}
+</div>
+
 <div class="mt-4">
     <a href="{% url 'liste_membres' %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
 </div>

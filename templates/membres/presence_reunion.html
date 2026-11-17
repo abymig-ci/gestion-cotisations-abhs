@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Liste de présence{% endblock %}
+{% block page_title %}Liste de présence{% endblock %}
+
+{% block content %}
+<div class="card-custom p-4 mb-4">
+    <h4 class="fw-bold mb-1">{{ reunion.titre }}</h4>
+    <p class="text-muted mb-0">
+        <i class="bi bi-calendar-event me-1"></i> {{ reunion.date_reunion|date:"d/m/Y à H:i" }}
+        &nbsp;·&nbsp; <i class="bi bi-geo-alt me-1"></i> {{ reunion.lieu }}
+        &nbsp;·&nbsp; <i class="bi bi-people me-1"></i> {{ reunion.groupe.nom }}
+    </p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card-custom p-4">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <input type="search" id="recherche" class="form-control" style="max-width: 260px;" placeholder="Rechercher un membre…">
+            <button type="button" class="btn btn-sm btn-outline-primary" id="tout-cocher">Tout cocher</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="tout-decocher">Tout décocher</button>
+            <span class="ms-auto fw-bold">Présents : <span id="compteur">{{ nb_presents }}</span> / {{ lignes|length }}</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th style="width:70px;">Présent</th>
+                        <th>Nom & Prénom</th>
+                        <th>Groupe</th>
+                        <th>Poste</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for l in lignes %}
+                    <tr class="ligne-membre">
+                        <td>
+                            <input type="checkbox" class="form-check-input case-presence" name="presents" value="{{ l.membre.pk }}" id="m{{ l.membre.pk }}" style="width:22px; height:22px;" {% if l.present %}checked{% endif %}>
+                        </td>
+                        <td><label for="m{{ l.membre.pk }}" class="fw-bold mb-0 nom-membre" style="cursor:pointer;">{{ l.membre.nom|upper }} {{ l.membre.prenom }}</label></td>
+                        <td>{{ l.membre.groupe.nom|default:"—" }}</td>
+                        <td>{{ l.membre.poste.nom|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted py-4">Aucun membre actif.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+            <a href="{% url 'liste_reunions' %}" class="btn-outline-custom py-2 px-4">Retour aux réunions</a>
+            {% if deja_enregistree %}
+            <a href="{% url 'presence_reunion_pdf' reunion.pk %}" target="_blank" class="btn btn-outline-dark"><i class="bi bi-file-earmark-pdf"></i> Imprimer la liste (PDF)</a>
+            {% endif %}
+            <button type="submit" class="btn-primary-custom py-2 px-4"><i class="bi bi-save"></i> Enregistrer la présence</button>
+        </div>
+    </div>
+</form>
+
+<script>
+(function () {
+    var cases = document.querySelectorAll('.case-presence');
+    var compteur = document.getElementById('compteur');
+    function maj() {
+        var n = 0;
+        cases.forEach(function (c) { if (c.checked) n++; });
+        compteur.textContent = n;
+    }
+    cases.forEach(function (c) { c.addEventListener('change', maj); });
+    function viser(coche) {
+        document.querySelectorAll('.ligne-membre').forEach(function (l) {
+            if (l.style.display !== 'none') l.querySelector('.case-presence').checked = coche;
+        });
+        maj();
+    }
+    document.getElementById('tout-cocher').addEventListener('click', function () { viser(true); });
+    document.getElementById('tout-decocher').addEventListener('click', function () { viser(false); });
+    document.getElementById('recherche').addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        document.querySelectorAll('.ligne-membre').forEach(function (l) {
+            var nom = l.querySelector('.nom-membre').textContent.toLowerCase();
+            l.style.display = nom.indexOf(q) === -1 ? 'none' : '';
+        });
+    });
+})();
+</script>
+{% endblock %}
