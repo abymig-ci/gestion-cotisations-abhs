@@ -5,13 +5,22 @@ from django.db.models import Sum
 from django.core.exceptions import PermissionDenied
 from .models import Depense
 from .forms import DepenseForm
-from cotisations.models import Cotisation
+from cotisations.models import Cotisation, Parametre
 from membres.models import ProfilAcces
 
 
 # --- HELPERS ---
 def get_assoc_id(request):
     return request.session.get('association_id')
+
+
+def montants_de_depart(request):
+    """Montants de départ (dépenses déjà faites, solde en caisse) de l'association active.
+    (0, 0) tant que le super utilisateur ne les a pas activés."""
+    parametre = Parametre.objects.filter(association_id=get_assoc_id(request)).first()
+    if parametre and parametre.montants_initiaux_actifs:
+        return parametre.depenses_initiales or 0, parametre.solde_initial or 0
+    return 0, 0
 
 
 # --- DÉCORATEUR POUR LE NOUVEAU SYSTÈME D'ACCÈS ---
@@ -41,19 +50,24 @@ def check_acces(acces_name):
 def liste_depenses(request):
     # ⬇️ Filtre par association
     depenses = Depense.objects.filter(association_id=get_assoc_id(request))
-    total_depenses = depenses.aggregate(total=Sum('montant'))['total'] or 0
+    depenses_initiales, solde_initial = montants_de_depart(request)
+    total_saisi = depenses.aggregate(total=Sum('montant'))['total'] or 0
+    total_depenses = total_saisi + depenses_initiales
     
     # ⬇️ Cotisations filtrées par association
     total_cotisations = Cotisation.objects.filter(
         association_id=get_assoc_id(request),
         statut='payee'
     ).aggregate(total=Sum('montant'))['total'] or 0
-    solde = total_cotisations - total_depenses
+    # Le solde de départ est déjà net des anciennes dépenses : on y ajoute les mouvements saisis depuis
+    solde = solde_initial + total_cotisations - total_saisi
 
     return render(request, 'depenses/liste.html', {
         'depenses': depenses,
         'total_depenses': total_depenses,
         'solde': solde,
+        'depenses_initiales': depenses_initiales,
+        'solde_initial': solde_initial,
     })
 
 
@@ -102,18 +116,23 @@ def supprimer_depense(request, pk):
 def liste_depenses_publique(request):
     # ⬇️ Filtre par association
     depenses = Depense.objects.filter(association_id=get_assoc_id(request))
-    total_depenses = depenses.aggregate(total=Sum('montant'))['total'] or 0
+    depenses_initiales, solde_initial = montants_de_depart(request)
+    total_saisi = depenses.aggregate(total=Sum('montant'))['total'] or 0
+    total_depenses = total_saisi + depenses_initiales
     
     # ⬇️ Cotisations filtrées par association
     total_cotisations = Cotisation.objects.filter(
         association_id=get_assoc_id(request),
         statut='payee'
     ).aggregate(total=Sum('montant'))['total'] or 0
-    solde = total_cotisations - total_depenses
+    # Le solde de départ est déjà net des anciennes dépenses : on y ajoute les mouvements saisis depuis
+    solde = solde_initial + total_cotisations - total_saisi
     
     return render(request, 'depenses/liste_publique.html', {
         'depenses': depenses,
         'total_depenses': total_depenses,
         'total_cotisations': total_cotisations,
         'solde': solde,
+        'depenses_initiales': depenses_initiales,
+        'solde_initial': solde_initial,
     })

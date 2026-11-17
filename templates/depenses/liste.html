@@ -10,6 +10,7 @@
             <div class="kpi-info">
                 <h3>{{ total_depenses|floatformat:0 }} FCFA</h3>
                 <p>Total des dépenses</p>
+                {% if depenses_initiales %}<small class="text-muted">dont {{ depenses_initiales|floatformat:0 }} FCFA de montant de départ</small>{% endif %}
             </div>
         </div>
     </div>
@@ -19,6 +20,7 @@
             <div class="kpi-info">
                 <h3>{{ solde|floatformat:0 }} FCFA</h3>
                 <p>Solde en caisse</p>
+                {% if solde_initial %}<small class="text-muted">solde de départ : {{ solde_initial|floatformat:0 }} FCFA</small>{% endif %}
             </div>
         </div>
     </div>
