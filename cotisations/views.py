@@ -400,7 +400,7 @@ def parametres(request):
         parametre = Parametre.objects.create(association_id=get_assoc_id(request), nom_association="Nouvelle Asso")
         
     if request.method == 'POST':
-        form = ParametreForm(request.POST, request.FILES, instance=parametre)
+        form = ParametreForm(request.POST, request.FILES, instance=parametre, user=request.user)
         if form.is_valid():
             instance = form.save(commit=False)
             
@@ -417,8 +417,11 @@ def parametres(request):
             messages.success(request, "Paramètres enregistrés avec succès.")
             return redirect('parametres')
     else:
-        form = ParametreForm(instance=parametre)
-    return render(request, 'cotisations/parametres.html', {'form': form})
+        form = ParametreForm(instance=parametre, user=request.user)
+    return render(request, 'cotisations/parametres.html', {
+        'form': form,
+        'est_super': request.user.is_superuser,
+    })
 
 
 # --- MOTIFS EXCEPTIONNELS ---

@@ -154,6 +154,23 @@ class Parametre(models.Model):
         help_text="Un message par ligne. Ils défilent en boucle sur la page « Mon espace » des membres."
     )
 
+    # --- Montants de départ (association existant depuis longtemps) ---
+    montants_initiaux_actifs = models.BooleanField(
+        default=False,
+        verbose_name="Activer les montants de départ",
+        help_text="Réservé au super utilisateur. Une fois activé, les autres utilisateurs ayant accès aux paramètres voient et peuvent remplir les deux montants ci-dessous."
+    )
+    depenses_initiales = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        verbose_name="Total des dépenses de départ (FCFA)",
+        help_text="Dépenses déjà effectuées avant l'utilisation de l'application."
+    )
+    solde_initial = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        verbose_name="Solde en caisse de départ (FCFA)",
+        help_text="Montant en caisse avant l'utilisation de l'application."
+    )
+
     class Meta:
         verbose_name = "Paramètre"
         verbose_name_plural = "Paramètres"

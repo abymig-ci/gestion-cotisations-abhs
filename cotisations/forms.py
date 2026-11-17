@@ -54,6 +54,9 @@ class ParametreForm(forms.ModelForm):
             'nombre_mois_tolerance',
             'montant_cotisation_mensuelle',
             'messages_defilants',
+            'montants_initiaux_actifs',
+            'depenses_initiales',
+            'solde_initial',
         ]
         widgets = {
             'logo': forms.FileInput(attrs={'class': 'form-control'}),
@@ -63,4 +66,18 @@ class ParametreForm(forms.ModelForm):
             'nombre_mois_tolerance': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'montant_cotisation_mensuelle': forms.NumberInput(attrs={'class': 'form-control'}),
             'messages_defilants': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Réunion samedi à 16h\nCotisation de novembre à régler'}),
+            'montants_initiaux_actifs': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'depenses_initiales': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'step': '1'}),
+            'solde_initial': forms.NumberInput(attrs={'class': 'form-control', 'step': '1'}),
         }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        est_super = bool(user and user.is_superuser)
+        if not est_super:
+            # La case d'activation est réservée au super utilisateur
+            del self.fields['montants_initiaux_actifs']
+            # Les autres ne voient les deux montants que si le super utilisateur les a activés
+            if not (self.instance and self.instance.pk and self.instance.montants_initiaux_actifs):
+                del self.fields['depenses_initiales']
+                del self.fields['solde_initial']
