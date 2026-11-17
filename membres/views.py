@@ -172,12 +172,13 @@ def modifier_membre(request, pk):
 def detail_membre(request, pk):
     membre = get_object_or_404(Membre.objects.select_related('poste', 'groupe'), pk=pk)
     
-    if not request.user.is_superuser:
-        est_son_profil = hasattr(request.user, 'membre_profil') and request.user.membre_profil.pk == membre.pk
-        # Un utilisateur ayant l'accès « Gérer les membres » voit les profils de SON association seulement
-        peut_gerer = has_acces(request.user, 'acces_membres') and membre.association_id == get_assoc_id(request)
-        if not (est_son_profil or peut_gerer):
-            raise PermissionDenied
+    est_son_profil = hasattr(request.user, 'membre_profil') and request.user.membre_profil.pk == membre.pk
+    # Un utilisateur ayant l'accès « Gérer les membres » voit les profils de SON association seulement
+    peut_gerer = request.user.is_superuser or (
+        has_acces(request.user, 'acces_membres') and membre.association_id == get_assoc_id(request)
+    )
+    if not (request.user.is_superuser or est_son_profil or peut_gerer):
+        raise PermissionDenied
 
     cotisations = membre.cotisations.all()
     
@@ -248,6 +249,7 @@ def detail_membre(request, pk):
         'montant_du': montant_du,
         'montant_assiste': montant_assiste,
         'today': timezone.now().date(),
+        'peut_creer_acces': peut_gerer,
     })
 
 
@@ -574,9 +576,12 @@ def modifier_acces_utilisateur(request, user_id):
 
 # --- CRÉATION D'ACCÈS (INVITATION) ---
 
-@admin_required
+@check_acces('acces_membres')
 def creer_acces_membre(request, pk):
     membre = get_object_or_404(Membre, pk=pk)
+    # Hors super utilisateur : uniquement les membres de son association
+    if not request.user.is_superuser and membre.association_id != get_assoc_id(request):
+        raise PermissionDenied
     
     if membre.utilisateur:
         messages.warning(request, "Ce membre a déjà un accès.")

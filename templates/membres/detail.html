@@ -77,7 +77,8 @@
                 <div><i class="bi bi-calendar3 text-primary me-2"></i> Adhésion : {{ membre.date_adhesion|date:"d/m/Y" }}</div>
             </div>
 
-            <!-- BLOC GESTION DES ACCÈS -->
+            <!-- BLOC GESTION DES ACCÈS (super utilisateur ou « Gérer les membres ») -->
+            {% if peut_creer_acces %}
             <div class="border-top pt-3">
                 {% if membre.utilisateur %}
                     <div class="alert alert-success py-2 mb-3 small text-center">
@@ -85,10 +86,12 @@
                         Compte lié : <strong>{{ membre.utilisateur.username }}</strong>
                     </div>
                     
-                    <!-- BOUTON POUR RÉINITIALISER LE MOT DE PASSE -->
+                    <!-- BOUTON POUR RÉINITIALISER LE MOT DE PASSE (super utilisateur seulement) -->
+                    {% if user.is_superuser %}
                     <a href="{% url 'reinitialiser_mot_de_passe' membre.pk %}" class="btn btn-outline-warning w-100">
                         <i class="bi bi-arrow-clockwise"></i> Réinitialiser le mot de passe
                     </a>
+                    {% endif %}
                 {% else %}
                     <a href="{% url 'creer_acces_membre' membre.pk %}" class="btn btn-outline-primary w-100">
                         <i class="bi bi-key-fill"></i> Créer un accès membre
@@ -104,6 +107,7 @@
                 </div>
                 {% endif %}
             </div>
+            {% endif %}
         </div>
     </div>
 
