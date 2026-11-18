@@ -429,6 +429,14 @@ def presence_reunion(request, pk):
 
     deja = dict(reunion.presences.values_list('membre_id', 'present'))
     lignes = [{'membre': m, 'present': deja.get(m.pk, False)} for m in membres]
+
+    # Liste déjà enregistrée : on affiche d'abord le récapitulatif (bouton « Modifier » pour changer)
+    if deja and not request.GET.get('modifier'):
+        return render(request, 'membres/presence_resume.html', {
+            'reunion': reunion,
+            'presents': [l['membre'] for l in lignes if l['present']],
+            'absents': [l['membre'] for l in lignes if not l['present']],
+        })
     return render(request, 'membres/presence_reunion.html', {
         'reunion': reunion,
         'lignes': lignes,
