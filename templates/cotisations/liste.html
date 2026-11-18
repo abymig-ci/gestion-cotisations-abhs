@@ -34,6 +34,16 @@
                 <option value="payee" {% if statut_filter == 'payee' %}selected{% endif %}>Payée</option>
             </select>
         </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold">Nom du membre</label>
+            <div class="input-group">
+                <input type="text" name="nom" value="{{ nom_filter }}" class="form-control border-0 bg-light" placeholder="Nom ou prénom…">
+                <button type="submit" class="btn btn-primary" title="Rechercher"><i class="bi bi-search"></i></button>
+                {% if nom_filter or type_filter or statut_filter %}
+                <a href="{% url 'liste_cotisations' %}" class="btn btn-outline-secondary" title="Réinitialiser les filtres"><i class="bi bi-x-lg"></i></a>
+                {% endif %}
+            </div>
+        </div>
     </form>
 </div>
 

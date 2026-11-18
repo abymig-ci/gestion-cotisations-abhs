@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.utils import timezone
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -186,17 +186,24 @@ def dashboard(request):
 def liste_cotisations(request):
     type_filter = request.GET.get('type', '')
     statut_filter = request.GET.get('statut', '')
+    nom_filter = request.GET.get('nom', '').strip()
 
     cotisations = Cotisation.objects.filter(association_id=get_assoc_id(request)).select_related('membre').order_by('-date_creation')
     if type_filter:
         cotisations = cotisations.filter(type_cotisation=type_filter)
     if statut_filter:
         cotisations = cotisations.filter(statut=statut_filter)
+    # Filtre par nom : chaque mot saisi doit se trouver dans le nom ou le prénom du membre
+    for mot in nom_filter.split():
+        cotisations = cotisations.filter(
+            Q(membre__nom__icontains=mot) | Q(membre__prenom__icontains=mot)
+        )
 
     return render(request, 'cotisations/liste.html', {
         'cotisations': cotisations,
         'type_filter': type_filter,
         'statut_filter': statut_filter,
+        'nom_filter': nom_filter,
         'today': timezone.now().date(),
     })
 
