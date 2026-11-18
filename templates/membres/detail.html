@@ -102,7 +102,12 @@
                 {% if membre.invitation_token %}
                 <div class="alert alert-info mt-3">
                     <strong>Lien temporaire :</strong><br>
-                    <input type="text" class="form-control mt-2" readonly value="{{ request.scheme }}://{{ request.get_host }}{% url 'definir_mot_de_passe' membre.invitation_token %}">
+                    <div class="input-group mt-2">
+                        <input type="text" id="lien-temporaire" class="form-control" readonly value="{{ request.scheme }}://{{ request.get_host }}{% url 'definir_mot_de_passe' membre.invitation_token %}">
+                        <button type="button" id="bouton-copier" class="btn btn-outline-primary" title="Copier le lien">
+                            <i class="bi bi-clipboard"></i> <span id="texte-copier">Copier</span>
+                        </button>
+                    </div>
                     <small class="text-muted">Copiez ce lien et envoyez-le au membre.</small>
                 </div>
                 {% endif %}
@@ -201,4 +206,28 @@
 <div class="mt-4">
     <a href="{% url 'liste_membres' %}" class="btn-outline-custom"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
 </div>
+<script>
+(function () {
+    var bouton = document.getElementById('bouton-copier');
+    if (!bouton) return;
+    var champ = document.getElementById('lien-temporaire');
+    var texte = document.getElementById('texte-copier');
+    function confirmer(ok) {
+        texte.textContent = ok ? 'Copié !' : 'Échec';
+        setTimeout(function () { texte.textContent = 'Copier'; }, 2000);
+    }
+    bouton.addEventListener('click', function () {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(champ.value).then(function () { confirmer(true); }, function () { confirmer(false); });
+        } else {
+            champ.focus();
+            champ.select();
+            champ.setSelectionRange(0, 99999);
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) {}
+            confirmer(ok);
+        }
+    });
+})();
+</script>
 {% endblock %}
