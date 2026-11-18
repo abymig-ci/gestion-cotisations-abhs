@@ -469,6 +469,30 @@ def presence_reunion_pdf(request, pk):
     return response
 
 
+@login_required
+def liste_presences_publique(request):
+    """Liste des réunions de l'association, consultable par tout membre connecté (lecture seule)."""
+    reunions = Reunion.objects.filter(association_id=get_assoc_id(request)).select_related('groupe').annotate(
+        nb_presents=Count('presences', filter=Q(presences__present=True)),
+        nb_absents=Count('presences', filter=Q(presences__present=False)),
+    )
+    return render(request, 'membres/presences_publique.html', {'reunions': reunions})
+
+
+@login_required
+def presence_reunion_publique(request, pk):
+    """Liste des présents d'une réunion, en lecture seule, pour tout membre connecté."""
+    reunion = get_object_or_404(Reunion, pk=pk, association_id=get_assoc_id(request))
+    presences = reunion.presences.select_related('membre', 'membre__groupe', 'membre__poste').order_by(
+        'membre__nom', 'membre__prenom')
+    return render(request, 'membres/presence_resume.html', {
+        'reunion': reunion,
+        'presents': [p.membre for p in presences if p.present],
+        'absents': [p.membre for p in presences if not p.present],
+        'lecture_seule': True,
+    })
+
+
 @check_acces('acces_reunions')
 def supprimer_reunion(request, pk):
     reunion = get_object_or_404(Reunion, pk=pk)

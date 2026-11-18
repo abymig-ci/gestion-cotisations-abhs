@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Présences aux réunions{% endblock %}
+{% block page_title %}Présences aux réunions{% endblock %}
+
+{% block content %}
+<p class="text-muted mb-4">Consultez les listes de présence des réunions de l'association (lecture seule).</p>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Réunion</th>
+                    <th>Date & Heure</th>
+                    <th>Lieu</th>
+                    <th>Présence</th>
+                    <th class="text-end">Liste</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reunions %}
+                <tr>
+                    <td class="fw-bold">{{ r.titre }}</td>
+                    <td>{{ r.date_reunion|date:"d/m/Y à H:i" }}</td>
+                    <td class="text-muted">{{ r.lieu }}</td>
+                    <td class="text-nowrap">
+                        {% if r.nb_presents or r.nb_absents %}
+                            <span class="badge bg-success">{{ r.nb_presents }} présent{{ r.nb_presents|pluralize }}</span>
+                        {% else %}
+                            <span class="text-muted small">Non pointée</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if r.nb_presents or r.nb_absents %}
+                        <a href="{% url 'presence_reunion_publique' r.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Voir</a>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Aucune réunion programmée.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

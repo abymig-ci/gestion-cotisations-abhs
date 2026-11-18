@@ -89,6 +89,7 @@
                 <li><a href="{% url 'membres_a_jour' %}" class="{% if 'membres_a_jour' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-check-circle-fill"></i> Membres à jour</a></li>
                 <li><a href="{% url 'membres_en_retard' %}" class="{% if 'membres_en_retard' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-exclamation-circle-fill"></i> Membres en retard</a></li>
                 <li><a href="{% url 'liste_depenses_publique' %}" class="{% if 'liste_depenses_publique' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cart-dash-fill"></i> Dépenses (Publique)</a></li>
+                <li><a href="{% url 'liste_presences_publique' %}" class="{% if 'presence' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-person-check-fill"></i> Présences aux réunions</a></li>
 
                 <!-- MENUS SPÉCIFIQUES SELON LES ACCÈS -->
                 {% if user.profil_acces %}
