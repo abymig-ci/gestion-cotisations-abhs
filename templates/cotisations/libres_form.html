@@ -40,7 +40,7 @@
                     <tr class="ligne">
                         <td><input type="checkbox" class="form-check-input chk" name="don_{{ l.membre.pk }}" {% if l.coche %}checked{% endif %}></td>
                         <td class="nom">{{ l.membre.nom }} {{ l.membre.prenom }}</td>
-                        <td><input type="text" inputmode="decimal" class="form-control form-control-sm mnt" name="montant_{{ l.membre.pk }}" value="{{ l.montant }}"></td>
+                        <td><input type="text" inputmode="decimal" class="form-control form-control-sm mnt" name="montant_{{ l.membre.pk }}" value="{{ l.montant }}" {% if not l.coche %}disabled{% endif %}></td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="3" class="text-muted text-center">Aucun membre actif.</td></tr>
@@ -71,8 +71,13 @@
     }
     document.querySelectorAll('.ligne').forEach(function (tr) {
         var chk = tr.querySelector('.chk'), mnt = tr.querySelector('.mnt');
-        chk.addEventListener('change', function () { if (chk.checked && !mnt.value) mnt.focus(); calcul(); });
-        mnt.addEventListener('input', function () { if (nombre(mnt.value) > 0) chk.checked = true; calcul(); });
+        mnt.disabled = !chk.checked;
+        chk.addEventListener('change', function () {
+            mnt.disabled = !chk.checked;
+            if (chk.checked) { mnt.focus(); }
+            calcul();
+        });
+        mnt.addEventListener('input', calcul);
     });
     document.getElementById('recherche').addEventListener('input', function () {
         var q = this.value.toLowerCase();
