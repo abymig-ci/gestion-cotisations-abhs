@@ -772,7 +772,7 @@ def definir_mot_de_passe(request, token):
     return render(request, 'membres/definir_mot_de_passe.html', {'token': token})
 
 
-@admin_required
+@check_acces('acces_membres')
 def etat_cotisations_pdf(request):
     assoc_id = get_assoc_id(request)
 
