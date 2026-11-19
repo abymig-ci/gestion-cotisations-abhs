@@ -1,5 +1,7 @@
 from django.db import models
+from django.db.models import Sum
 from django.utils import timezone
+from datetime import date
 from membres.models import Membre
 
 
@@ -180,6 +182,50 @@ class Parametre(models.Model):
 
     def __str__(self):
         return f"Paramètres de {self.nom_association}"
+
+
+class CotisationLibre(models.Model):
+    """Collecte libre (dons des membres) : indépendante des autres cotisations, hors comptabilité."""
+    association = models.ForeignKey(
+        Association, on_delete=models.CASCADE,
+        related_name='cotisations_libres',
+        null=True, blank=True,
+        verbose_name="Association"
+    )
+    motif = models.CharField(max_length=200, verbose_name="Motif de la cotisation")
+    date_cotisation = models.DateField(default=date.today, verbose_name="Date")
+    description = models.TextField(blank=True, verbose_name="Description")
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date_cotisation', '-id']
+        verbose_name = "Cotisation libre"
+        verbose_name_plural = "Cotisations libres"
+
+    def total(self):
+        return self.dons.aggregate(total=Sum('montant'))['total'] or 0
+
+    def __str__(self):
+        return self.motif
+
+
+class DonCotisationLibre(models.Model):
+    """Don d'un membre dans une cotisation libre."""
+    cotisation = models.ForeignKey(
+        CotisationLibre, on_delete=models.CASCADE, related_name='dons'
+    )
+    membre = models.ForeignKey(
+        Membre, on_delete=models.CASCADE, related_name='dons_libres'
+    )
+    montant = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        unique_together = [('cotisation', 'membre')]
+        verbose_name = "Don (cotisation libre)"
+        verbose_name_plural = "Dons (cotisations libres)"
+
+    def __str__(self):
+        return f"{self.membre} - {self.montant} FCFA"
 
 
 class Sauvegarde(models.Model):
