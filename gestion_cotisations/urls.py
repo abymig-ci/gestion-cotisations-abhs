@@ -12,6 +12,7 @@ urlpatterns = [
     path('login/', ConnexionView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('', include('cotisations.urls_libres')),
+    path('', include('cotisations.urls_empreinte')),
     path('', include('cotisations.urls')),
     path('membres/', include('membres.urls')),
     path('depenses/', include('depenses.urls')),

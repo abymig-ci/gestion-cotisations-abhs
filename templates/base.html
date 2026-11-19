@@ -83,10 +83,12 @@
                 <li><a href="{% url 'parametres' %}" class="{% if 'parametre' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-gear-fill"></i> Paramètres</a></li>
                 <li><a href="{% url 'gerer_acces_utilisateurs' %}" class="{% if 'acces' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-shield-lock-fill"></i> Gérer les accès</a></li>
                 <li><a href="{% url 'liste_sauvegardes' %}" class="{% if 'sauvegarde' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-hdd-fill"></i> Sauvegardes</a></li>
+                <li><a href="{% url 'empreinte_gerer' %}" class="{% if 'empreinte' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-fingerprint"></i> Connexion par empreinte</a></li>
                 <li><a href="/admin/"><i class="bi bi-tools"></i> Administration Django</a></li>
             {% else %}
                 <!-- MENU POUR TOUS LES MEMBRES -->
                 <li><a href="{% url 'mon_espace' %}" class="{% if 'mon_espace' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-house-door-fill"></i> Mon Espace</a></li>
+                <li><a href="{% url 'empreinte_gerer' %}" class="{% if 'empreinte' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-fingerprint"></i> Connexion par empreinte</a></li>
                 <li><a href="{% url 'membres_a_jour' %}" class="{% if 'membres_a_jour' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-check-circle-fill"></i> Membres à jour</a></li>
                 <li><a href="{% url 'membres_en_retard' %}" class="{% if 'membres_en_retard' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-exclamation-circle-fill"></i> Membres en retard</a></li>
                 <li><a href="{% url 'liste_depenses_publique' %}" class="{% if 'liste_depenses_publique' in request.resolver_match.url_name %}active{% endif %}"><i class="bi bi-cart-dash-fill"></i> Dépenses (Publique)</a></li>

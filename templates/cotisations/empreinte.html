@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Connexion par empreinte{% endblock %}
+{% block page_title %}Connexion par empreinte{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card-custom p-4 p-md-5 mb-3">
+            <h5 class="fw-bold mb-2"><i class="bi bi-fingerprint"></i> Se connecter avec mon empreinte</h5>
+            <p class="text-muted small">
+                Option facultative. Votre empreinte reste dans votre téléphone : le site ne la voit jamais.
+                Votre mot de passe fonctionne toujours. L'activation se fait appareil par appareil.
+            </p>
+            <div id="non-supporte" class="alert alert-warning d-none">
+                Cet appareil ou ce navigateur ne permet pas la connexion par empreinte.
+            </div>
+            <div id="zone-activation">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold" for="nom-appareil">Nom de cet appareil (facultatif)</label>
+                    <input type="text" id="nom-appareil" class="form-control" maxlength="100" placeholder="Ex : Mon téléphone">
+                </div>
+                <button type="button" id="btn-activer" class="btn btn-primary">
+                    <i class="bi bi-fingerprint"></i> Activer sur cet appareil
+                </button>
+                <div id="message" class="small mt-3"></div>
+            </div>
+        </div>
+
+        <div class="card-custom p-4">
+            <h6 class="fw-bold mb-3">Appareils enregistrés</h6>
+            {% for a in appareils %}
+            <div class="d-flex justify-content-between align-items-center border-bottom py-2 gap-2">
+                <div>
+                    <div class="fw-bold">{{ a.nom|default:"Appareil" }}</div>
+                    <div class="text-muted small">
+                        Ajouté le {{ a.date_creation|date:"d/m/Y" }}
+                        {% if a.derniere_utilisation %} · utilisé le {{ a.derniere_utilisation|date:"d/m/Y à H:i" }}{% endif %}
+                    </div>
+                </div>
+                <form method="post" action="{% url 'empreinte_supprimer' a.pk %}" onsubmit="return confirm('Retirer cet appareil ?');">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Retirer</button>
+                </form>
+            </div>
+            {% empty %}
+            <p class="text-muted small mb-0">Aucun appareil enregistré.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<form style="display:none">{% csrf_token %}</form>
+<script>
+(function () {
+    function b64d(s) {
+        s = s.replace(/-/g, '+').replace(/_/g, '/');
+        while (s.length % 4) s += '=';
+        var b = atob(s), a = new Uint8Array(b.length);
+        for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
+        return a.buffer;
+    }
+    function b64e(buf) {
+        var a = new Uint8Array(buf), s = '';
+        for (var i = 0; i < a.length; i++) s += String.fromCharCode(a[i]);
+        return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    var csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    var msg = document.getElementById('message');
+    function post(url, corps) {
+        return fetch(url, {
+            method: 'POST', credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf},
+            body: JSON.stringify(corps || {})
+        }).then(function (r) { return r.json().then(function (j) { j._status = r.status; return j; }); });
+    }
+    if (!window.PublicKeyCredential || !navigator.credentials) {
+        document.getElementById('non-supporte').classList.remove('d-none');
+        document.getElementById('zone-activation').classList.add('d-none');
+        return;
+    }
+    document.getElementById('btn-activer').addEventListener('click', function () {
+        msg.className = 'small mt-3 text-muted';
+        msg.textContent = 'Suivez les instructions de votre téléphone...';
+        post("{% url 'empreinte_options_enreg' %}").then(function (opt) {
+            opt.challenge = b64d(opt.challenge);
+            opt.user.id = b64d(opt.user.id);
+            (opt.excludeCredentials || []).forEach(function (c) { c.id = b64d(c.id); });
+            return navigator.credentials.create({publicKey: opt});
+        }).then(function (cred) {
+            var r = cred.response;
+            return post("{% url 'empreinte_enregistrer' %}", {
+                nom: document.getElementById('nom-appareil').value,
+                credential: {
+                    id: cred.id, rawId: b64e(cred.rawId), type: cred.type,
+                    response: {
+                        clientDataJSON: b64e(r.clientDataJSON),
+                        attestationObject: b64e(r.attestationObject),
+                        transports: r.getTransports ? r.getTransports() : []
+                    },
+                    clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {}
+                }
+            });
+        }).then(function (res) {
+            if (res.ok) { window.location.reload(); }
+            else { msg.className = 'small mt-3 text-danger'; msg.textContent = res.erreur || 'Échec.'; }
+        }).catch(function (e) {
+            msg.className = 'small mt-3 text-danger';
+            msg.textContent = "Activation annulée ou impossible sur cet appareil.";
+        });
+    });
+})();
+</script>
+{% endblock %}

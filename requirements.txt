@@ -22,3 +22,4 @@ tzdata==2026.3
 whitenoise==6.12.0
 weasyprint>=60.0
 requests>=2.31.0
+webauthn==2.7.0

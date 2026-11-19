@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
@@ -240,3 +241,25 @@ class Sauvegarde(models.Model):
 
     def __str__(self):
         return self.nom_fichier
+
+
+class EmpreinteAppareil(models.Model):
+    """Appareil enregistré par un utilisateur pour se connecter par empreinte digitale (WebAuthn).
+    Seule la clé publique est stockée : l'empreinte elle-même reste dans le téléphone."""
+    utilisateur = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='empreintes'
+    )
+    credential_id = models.CharField(max_length=512, unique=True)
+    cle_publique = models.TextField()
+    compteur = models.PositiveBigIntegerField(default=0)
+    nom = models.CharField(max_length=100, blank=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    derniere_utilisation = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date_creation']
+        verbose_name = "Empreinte (appareil)"
+        verbose_name_plural = "Empreintes (appareils)"
+
+    def __str__(self):
+        return f"{self.utilisateur} - {self.nom or 'appareil'}"
