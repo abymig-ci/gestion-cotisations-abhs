@@ -1,5 +1,5 @@
 from django import forms
-from .models import Cotisation, Parametre
+from .models import Cotisation, Parametre, CotisationLibre
 
 
 class CotisationForm(forms.ModelForm):
@@ -81,3 +81,14 @@ class ParametreForm(forms.ModelForm):
             if not (self.instance and self.instance.pk and self.instance.montants_initiaux_actifs):
                 del self.fields['depenses_initiales']
                 del self.fields['solde_initial']
+
+
+class CotisationLibreForm(forms.ModelForm):
+    class Meta:
+        model = CotisationLibre
+        fields = ['motif', 'date_cotisation', 'description']
+        widgets = {
+            'motif': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Soutien à la famille d\'un membre'}),
+            'date_cotisation': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }

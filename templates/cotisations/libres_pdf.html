@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-family: 'Helvetica', 'Arial', sans-serif;
+                font-size: 9pt;
+                color: #64748b;
+            }
+        }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10pt; color: #1e293b; }
+        .header { text-align: center; border-bottom: 2px solid #0a1c5c; padding-bottom: 10px; margin-bottom: 20px; }
+        .header img { max-width: 80px; margin-bottom: 10px; border-radius: 50%; }
+        .header h1 { margin: 0; color: #0a1c5c; font-size: 16pt; }
+        .header p { margin: 5px 0 0; color: #64748b; font-size: 9pt; }
+        .infos { margin-bottom: 15px; }
+        .infos .motif { font-size: 13pt; font-weight: bold; color: #0a1c5c; }
+        .infos .desc { margin-top: 6px; white-space: pre-line; }
+        table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+        th { background: #f1f5f9; text-align: left; padding: 6px; border: 1px solid #cbd5e1; }
+        td { padding: 6px; border: 1px solid #cbd5e1; }
+        .r { text-align: right; }
+        .total td { background: #0a1c5c; color: white; font-weight: bold; }
+        thead { display: table-header-group; }
+        tr { page-break-inside: avoid; break-inside: avoid; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if logo_base64 %}<img src="{{ logo_base64 }}" alt="Logo"><br>{% endif %}
+        <h1>{{ nom_association }}</h1>
+        <p>Cotisation libre — édité le {{ today|date:"d/m/Y" }}</p>
+    </div>
+
+    <div class="infos">
+        <div class="motif">{{ cotisation.motif }}</div>
+        <div>Date : {{ cotisation.date_cotisation|date:"d/m/Y" }}</div>
+        {% if cotisation.description %}<div class="desc">{{ cotisation.description }}</div>{% endif %}
+    </div>
+
+    <table>
+        <thead><tr><th style="width:40px">N°</th><th>Membre</th><th class="r" style="width:140px">Montant (FCFA)</th></tr></thead>
+        <tbody>
+            {% for d in dons %}
+            <tr><td>{{ forloop.counter }}</td><td>{{ d.membre.nom }} {{ d.membre.prenom }}</td><td class="r">{{ d.montant|floatformat:0 }}</td></tr>
+            {% empty %}
+            <tr><td colspan="3" style="text-align:center">Aucun don enregistré.</td></tr>
+            {% endfor %}
+            <tr class="total"><td colspan="2" class="r">TOTAL OBTENU</td><td class="r">{{ total|floatformat:0 }} FCFA</td></tr>
+        </tbody>
+    </table>
+</body>
+</html>

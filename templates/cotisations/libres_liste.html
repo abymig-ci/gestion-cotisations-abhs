@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Cotisations libres{% endblock %}
+{% block page_title %}Cotisations libres{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <p class="text-muted mb-0">Collectes libres des membres, indépendantes des autres cotisations et hors comptabilité.</p>
+    {% if peut_gerer %}
+    <a href="{% url 'libres_ajouter' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Nouvelle cotisation libre</a>
+    {% endif %}
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Motif</th>
+                    <th>Donateurs</th>
+                    <th class="text-end">Total</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in cotisations %}
+                <tr>
+                    <td class="text-nowrap">{{ c.date_cotisation|date:"d/m/Y" }}</td>
+                    <td class="fw-bold">{{ c.motif }}</td>
+                    <td>{{ c.nb_donateurs }}</td>
+                    <td class="text-end fw-bold text-nowrap">{{ c.total_dons|default:0|floatformat:0 }} FCFA</td>
+                    <td class="text-end text-nowrap">
+                        <a href="{% url 'libres_detail' c.pk %}" class="btn btn-sm btn-outline-primary" title="Voir"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'libres_pdf' c.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary" title="PDF"><i class="bi bi-file-earmark-pdf"></i></a>
+                        {% if peut_gerer %}
+                        <a href="{% url 'libres_modifier' c.pk %}" class="btn btn-sm btn-outline-warning" title="Modifier"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'libres_supprimer' c.pk %}" class="btn btn-sm btn-outline-danger" title="Supprimer"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Aucune cotisation libre pour le moment.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

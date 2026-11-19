@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}{{ titre }}{% endblock %}
+{% block page_title %}{{ titre }}{% endblock %}
+
+{% block content %}
+{% if erreurs %}
+<div class="alert alert-danger"><ul class="mb-0">{% for e in erreurs %}<li>{{ e }}</li>{% endfor %}</ul></div>
+{% endif %}
+<form method="post">
+    {% csrf_token %}
+    <div class="card-custom mb-3">
+        {{ form.non_field_errors }}
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label fw-bold">{{ form.motif.label }}</label>
+                {{ form.motif }}{{ form.motif.errors }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">{{ form.date_cotisation.label }}</label>
+                {{ form.date_cotisation }}{{ form.date_cotisation.errors }}
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold">{{ form.description.label }}</label>
+                {{ form.description }}{{ form.description.errors }}
+            </div>
+        </div>
+    </div>
+
+    <div class="card-custom mb-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <h5 class="mb-0">Membres ayant donné</h5>
+            <div class="fw-bold">Total : <span id="total">0</span> FCFA</div>
+        </div>
+        <input type="text" id="recherche" class="form-control mb-2" placeholder="Rechercher un membre...">
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead><tr><th style="width:50px">A donné</th><th>Membre</th><th style="width:180px">Montant (FCFA)</th></tr></thead>
+                <tbody>
+                    {% for l in lignes %}
+                    <tr class="ligne">
+                        <td><input type="checkbox" class="form-check-input chk" name="don_{{ l.membre.pk }}" {% if l.coche %}checked{% endif %}></td>
+                        <td class="nom">{{ l.membre.nom }} {{ l.membre.prenom }}</td>
+                        <td><input type="text" inputmode="decimal" class="form-control form-control-sm mnt" name="montant_{{ l.membre.pk }}" value="{{ l.montant }}"></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-muted text-center">Aucun membre actif.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Enregistrer</button>
+        <a href="{% if cotisation %}{% url 'libres_detail' cotisation.pk %}{% else %}{% url 'libres_liste' %}{% endif %}" class="btn btn-outline-secondary">Annuler</a>
+    </div>
+</form>
+
+<script>
+(function () {
+    function nombre(t) {
+        var v = parseFloat((t || '').replace(/[\s  ]/g, '').replace(',', '.'));
+        return isNaN(v) ? 0 : v;
+    }
+    function calcul() {
+        var s = 0;
+        document.querySelectorAll('.ligne').forEach(function (tr) {
+            if (tr.querySelector('.chk').checked) s += nombre(tr.querySelector('.mnt').value);
+        });
+        document.getElementById('total').textContent = Math.round(s * 100) / 100;
+    }
+    document.querySelectorAll('.ligne').forEach(function (tr) {
+        var chk = tr.querySelector('.chk'), mnt = tr.querySelector('.mnt');
+        chk.addEventListener('change', function () { if (chk.checked && !mnt.value) mnt.focus(); calcul(); });
+        mnt.addEventListener('input', function () { if (nombre(mnt.value) > 0) chk.checked = true; calcul(); });
+    });
+    document.getElementById('recherche').addEventListener('input', function () {
+        var q = this.value.toLowerCase();
+        document.querySelectorAll('.ligne').forEach(function (tr) {
+            tr.style.display = tr.querySelector('.nom').textContent.toLowerCase().indexOf(q) === -1 ? 'none' : '';
+        });
+    });
+    calcul();
+})();
+</script>
+{% endblock %}

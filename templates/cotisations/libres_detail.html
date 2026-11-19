@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{{ cotisation.motif }}{% endblock %}
+{% block page_title %}Cotisation libre{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
+    <a href="{% url 'libres_liste' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour</a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'libres_pdf' cotisation.pk %}" target="_blank" class="btn btn-outline-primary"><i class="bi bi-file-earmark-pdf"></i> Imprimer PDF</a>
+        {% if peut_gerer %}
+        <a href="{% url 'libres_modifier' cotisation.pk %}" class="btn btn-warning"><i class="bi bi-pencil"></i> Modifier</a>
+        <a href="{% url 'libres_supprimer' cotisation.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Supprimer</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card-custom mb-3">
+    <h4 class="mb-1">{{ cotisation.motif }}</h4>
+    <div class="text-muted mb-2"><i class="bi bi-calendar-event"></i> {{ cotisation.date_cotisation|date:"d/m/Y" }}</div>
+    {% if cotisation.description %}<p class="mb-0" style="white-space:pre-line">{{ cotisation.description }}</p>{% endif %}
+</div>
+
+<div class="card-custom">
+    <div class="table-responsive">
+        <table class="table-custom">
+            <thead><tr><th>#</th><th>Membre</th><th class="text-end">Montant</th></tr></thead>
+            <tbody>
+                {% for d in dons %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td class="fw-bold">{{ d.membre.nom }} {{ d.membre.prenom }}</td>
+                    <td class="text-end text-nowrap">{{ d.montant|floatformat:0 }} FCFA</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted py-3">Aucun don enregistré.</td></tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="2" class="text-end">TOTAL OBTENU</th>
+                    <th class="text-end text-nowrap">{{ total|floatformat:0 }} FCFA</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

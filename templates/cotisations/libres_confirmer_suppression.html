@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer la cotisation libre{% endblock %}
+{% block page_title %}Supprimer la cotisation libre{% endblock %}
+
+{% block content %}
+<div class="card-custom">
+    <p>Voulez-vous vraiment supprimer la cotisation libre <strong>« {{ cotisation.motif }} »</strong> du {{ cotisation.date_cotisation|date:"d/m/Y" }} (total : {{ cotisation.total|floatformat:0 }} FCFA) ?</p>
+    <p class="text-danger">Tous les dons enregistrés seront supprimés. Cette action est irréversible.</p>
+    <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+        <a href="{% url 'libres_detail' cotisation.pk %}" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+</div>
+{% endblock %}

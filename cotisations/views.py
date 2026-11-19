@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Count
+from django.db import transaction
+from decimal import Decimal, InvalidOperation
 from django.utils import timezone
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -20,8 +22,8 @@ from datetime import datetime
 from django.conf import settings
 import requests
 
-from .models import Cotisation, Parametre, Sauvegarde, Association
-from .forms import CotisationForm, ParametreForm
+from .models import Cotisation, Parametre, Sauvegarde, Association, CotisationLibre, DonCotisationLibre
+from .forms import CotisationForm, ParametreForm, CotisationLibreForm
 from membres.models import Membre, ProfilAcces
 
 
@@ -603,6 +605,131 @@ def detail_motif_exceptionnel_pdf(request, libelle):
     return response
 
 
+# --- COTISATIONS LIBRES (dons, hors comptabilité) ---
+
+def _lire_montant(texte):
+    """Convertit un texte saisi (ex. « 5 000 » ou « 2500,50 ») en Decimal ; None si invalide."""
+    brut = (texte or '').replace('\u202f', '').replace('\xa0', '').replace(' ', '').replace(',', '.')
+    try:
+        valeur = Decimal(brut)
+    except (InvalidOperation, ValueError):
+        return None
+    return valeur if valeur > 0 else None
+
+
+@login_required
+def liste_cotisations_libres(request):
+    assoc_id = get_assoc_id(request)
+    if not assoc_id:
+        if request.user.is_superuser:
+            return redirect('choisir_association')
+        raise PermissionDenied
+    cotisations = CotisationLibre.objects.filter(association_id=assoc_id).annotate(
+        total_dons=Sum('dons__montant'), nb_donateurs=Count('dons')
+    )
+    return render(request, 'cotisations/libres_liste.html', {
+        'cotisations': cotisations,
+        'peut_gerer': has_acces(request.user, 'acces_cotisations'),
+    })
+
+
+@login_required
+def detail_cotisation_libre(request, pk):
+    cotisation = get_object_or_404(CotisationLibre, pk=pk, association_id=get_assoc_id(request))
+    dons = cotisation.dons.select_related('membre').order_by('membre__nom', 'membre__prenom')
+    return render(request, 'cotisations/libres_detail.html', {
+        'cotisation': cotisation,
+        'dons': dons,
+        'total': cotisation.total(),
+        'peut_gerer': has_acces(request.user, 'acces_cotisations'),
+    })
+
+
+@check_acces('acces_cotisations')
+def editer_cotisation_libre(request, pk=None):
+    assoc_id = get_assoc_id(request)
+    cotisation = get_object_or_404(CotisationLibre, pk=pk, association_id=assoc_id) if pk else None
+    dons_existants = {d.membre_id: d.montant for d in cotisation.dons.all()} if cotisation else {}
+
+    # Membres actifs de l'association + ceux qui ont déjà un don enregistré
+    membres = list(
+        Membre.objects.filter(association_id=assoc_id).filter(
+            Q(statut='actif') | Q(pk__in=list(dons_existants.keys()))
+        ).order_by('nom', 'prenom')
+    )
+
+    erreurs = []
+    if request.method == 'POST':
+        form = CotisationLibreForm(request.POST, instance=cotisation)
+        saisies = {}
+        for m in membres:
+            coche = bool(request.POST.get(f'don_{m.pk}'))
+            texte = request.POST.get(f'montant_{m.pk}', '')
+            saisies[m.pk] = (coche, texte)
+            if coche and _lire_montant(texte) is None:
+                erreurs.append(f"Montant invalide pour {m.nom} {m.prenom} (saisissez un nombre supérieur à 0).")
+
+        if form.is_valid() and not erreurs:
+            with transaction.atomic():
+                instance = form.save(commit=False)
+                instance.association_id = assoc_id
+                instance.save()
+                instance.dons.all().delete()
+                DonCotisationLibre.objects.bulk_create([
+                    DonCotisationLibre(cotisation=instance, membre=m, montant=_lire_montant(saisies[m.pk][1]))
+                    for m in membres if saisies[m.pk][0]
+                ])
+            messages.success(request, "Cotisation libre enregistrée avec succès.")
+            return redirect('libres_detail', pk=instance.pk)
+        lignes = [{'membre': m, 'coche': saisies[m.pk][0], 'montant': saisies[m.pk][1]} for m in membres]
+    else:
+        form = CotisationLibreForm(instance=cotisation)
+        lignes = [{
+            'membre': m,
+            'coche': m.pk in dons_existants,
+            'montant': (f"{dons_existants[m.pk]:.0f}" if m.pk in dons_existants and dons_existants[m.pk] == dons_existants[m.pk].to_integral_value()
+                        else (str(dons_existants[m.pk]) if m.pk in dons_existants else '')),
+        } for m in membres]
+
+    return render(request, 'cotisations/libres_form.html', {
+        'form': form,
+        'lignes': lignes,
+        'erreurs': erreurs,
+        'cotisation': cotisation,
+        'titre': 'Modifier la cotisation libre' if cotisation else 'Nouvelle cotisation libre',
+    })
+
+
+@check_acces('acces_cotisations')
+def supprimer_cotisation_libre(request, pk):
+    cotisation = get_object_or_404(CotisationLibre, pk=pk, association_id=get_assoc_id(request))
+    if request.method == 'POST':
+        cotisation.delete()
+        messages.success(request, "Cotisation libre supprimée.")
+        return redirect('libres_liste')
+    return render(request, 'cotisations/libres_confirmer_suppression.html', {'cotisation': cotisation})
+
+
+@login_required
+def cotisation_libre_pdf(request, pk):
+    cotisation = get_object_or_404(CotisationLibre, pk=pk, association_id=get_assoc_id(request))
+    dons = cotisation.dons.select_related('membre').order_by('membre__nom', 'membre__prenom')
+    assoc_active = Association.objects.filter(id=get_assoc_id(request)).first()
+
+    html_string = render_to_string('cotisations/libres_pdf.html', {
+        'cotisation': cotisation,
+        'dons': dons,
+        'total': cotisation.total(),
+        'today': timezone.now().date(),
+        'logo_base64': get_logo_base64(request),
+        'nom_association': assoc_active.nom if assoc_active else "Nom de l'association",
+    })
+    pdf = HTML(string=html_string).write_pdf()
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="cotisation_libre.pdf"'
+    return response
+
+
 # --- SAUVEGARDES ---
 
 @check_acces('acces_sauvegardes')
@@ -630,6 +757,8 @@ def creer_sauvegarde(request):
             'cotisations': json.loads(serialize('json', Cotisation.objects.filter(association_id=assoc_id))),
             'parametres': json.loads(serialize('json', Parametre.objects.filter(association_id=assoc_id))),
             'depenses': json.loads(serialize('json', Depense.objects.filter(association_id=assoc_id))),
+            'cotisations_libres': json.loads(serialize('json', CotisationLibre.objects.filter(association_id=assoc_id))),
+            'dons_cotisations_libres': json.loads(serialize('json', DonCotisationLibre.objects.filter(cotisation__association_id=assoc_id))),
         }
         
         chemin_fichier = os.path.join('sauvegardes', nom_fichier)
