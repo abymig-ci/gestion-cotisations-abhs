@@ -145,6 +145,11 @@ class Parametre(models.Model):
         verbose_name="Nombre de mois de tolérance avant la date de référence",
         help_text="Un membre est à jour s'il a payé jusqu'à X mois avant la date de référence."
     )
+    mois_carence = models.PositiveSmallIntegerField(
+        default=6,
+        verbose_name="Mois de carence des nouveaux membres",
+        help_text="Durée pendant laquelle un nouveau membre est « en carence » après son adhésion (0 = pas de carence)."
+    )
     
     montant_cotisation_mensuelle = models.DecimalField(
         max_digits=10, decimal_places=2, default=5000,
