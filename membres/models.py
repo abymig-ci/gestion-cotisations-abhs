@@ -125,7 +125,11 @@ class Membre(models.Model):
 
     @property
     def date_fin_carence(self):
-        return self.date_adhesion + relativedelta(months=6)
+        from cotisations.models import Parametre
+        mois = Parametre.objects.filter(association_id=self.association_id).values_list('mois_carence', flat=True).first()
+        if mois is None:
+            mois = 6
+        return self.date_adhesion + relativedelta(months=mois)
 
     @property
     def statut_cotisation(self):

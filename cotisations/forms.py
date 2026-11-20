@@ -52,6 +52,7 @@ class ParametreForm(forms.ModelForm):
             'couleur_principale',
             'base_calcul_date',
             'nombre_mois_tolerance',
+            'mois_carence',
             'montant_cotisation_mensuelle',
             'messages_defilants',
             'montants_initiaux_actifs',
@@ -64,6 +65,7 @@ class ParametreForm(forms.ModelForm):
             'couleur_principale': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}), # <-- SÉLECTEUR DE COULEUR
             'base_calcul_date': forms.Select(attrs={'class': 'form-select'}),
             'nombre_mois_tolerance': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'mois_carence': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 60}),
             'montant_cotisation_mensuelle': forms.NumberInput(attrs={'class': 'form-control'}),
             'messages_defilants': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Réunion samedi à 16h\nCotisation de novembre à régler'}),
             'montants_initiaux_actifs': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
